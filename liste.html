@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DGFIP Predictor Map V5</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    :root{
+      --bg:#05070c;
+      --panel:#0d1323;
+      --panel2:#111a31;
+      --line:#223156;
+      --text:#edf3ff;
+      --muted:#97a6cb;
+      --accent:#63a4ff;
+      --accent2:#6ef0c2;
+      --warn:#ffd166;
+      --danger:#ff7a7a;
+      --ok:#62e5a0;
+      --shadow:0 16px 42px rgba(0,0,0,.32);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      padding:0;
+      background:linear-gradient(180deg,#04060b 0%, #09101e 100%);
+      color:var(--text);
+      font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+      height:100%;
+    }
+
+    .app{
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .topbar{
+      margin-bottom:14px;
+    }
+
+    .topbar h1{
+      margin:0 0 6px;
+      font-size:28px;
+      line-height:1.15;
+    }
+
+    .topbar p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.45;
+      font-size:14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 420px 1.2fr 1fr;
+      grid-template-rows: 52vh 42vh;
+      gap:14px;
+      min-height: calc(100vh - 90px);
+    }
+
+    .panel{
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+
+    .panelHeader{
+      padding:14px 16px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+
+    .panelHeader h2{
+      margin:0;
+      font-size:16px;
+    }
+
+    .panelBody{
+      padding:14px 16px 16px;
+      height:calc(100% - 52px);
+      overflow:auto;
+    }
+
+    .leftPanel{
+      grid-column:1;
+      grid-row:1 / span 2;
+    }
+
+    .mapPanel{
+      grid-column:2;
+      grid-row:1 / span 2;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .dgfipPanel{
+      grid-column:3;
+      grid-row:1;
+    }
+
+    .infoPanel{
+      grid-column:3;
+      grid-row:2;
+    }
+
+    #map{
+      width:100%;
+      height:100%;
+      min-height:400px;
+      background:#0b1328;
+    }
+
+    .mapWrap{
+      flex:1;
+      min-height:0;
+      position:relative;
+    }
+
+    .mapOverlay{
+      position:absolute;
+      left:12px;
+      bottom:12px;
+      z-index:500;
+      background:rgba(8,13,26,.88);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      color:var(--muted);
+      font-size:12px;
+      backdrop-filter: blur(8px);
+      max-width: 380px;
+    }
+
+    .field{
+      margin-bottom:10px;
+    }
+
+    label{
+      display:block;
+      margin-bottom:6px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    input,select,textarea,button{
+      width:100%;
+      border-radius:12px;
+      border:1px solid #2a3963;
+      background:#0a1227;
+      color:var(--text);
+      padding:11px 12px;
+      font-size:14px;
+      outline:none;
+    }
+
+    textarea{
+      min-height:180px;
+      resize:vertical;
+      line-height:1.4;
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .row3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+    }
+
+    .check{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:8px;
+      background:#0a1227;
+      border:1px solid #2a3963;
+      border-radius:12px;
+      padding:10px 12px;
+    }
+
+    .check input{
+      width:auto;
+      margin:3px 0 0;
+    }
+
+    .check span{
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .btns{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    button{
+      cursor:pointer;
+      font-weight:700;
+      background:linear-gradient(180deg,#2f63cf,#244fa8);
+    }
+
+    button.secondary{
+      background:linear-gradient(180deg,#243a65,#192947);
+    }
+
+    button.ghost{
+      background:linear-gradient(180deg,#1b233b,#151c31);
+    }
+
+    .badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#0a1227;
+      border:1px solid #2a3963;
+      color:var(--muted);
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .kpi{
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .kpi .t{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    .kpi .v{
+      font-size:24px;
+      font-weight:900;
+    }
+
+    .subTitle{
+      margin:14px 0 10px;
+      font-size:14px;
+      font-weight:800;
+    }
+
+    .top3{
+      display:grid;
+      gap:10px;
+    }
+
+    .topCard{
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .topCard h3{
+      margin:0 0 6px;
+      font-size:15px;
+    }
+
+    .topCard .pct{
+      font-size:28px;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+
+    .bar{
+      height:9px;
+      border-radius:999px;
+      background:#1a2745;
+      border:1px solid #26365e;
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+
+    .bar > span{
+      display:block;
+      height:100%;
+      background:linear-gradient(90deg,#64a8ff,#6ef0c2);
+      width:0%;
+    }
+
+    .muted{ color:var(--muted); }
+    .small{ font-size:12px; line-height:1.45; }
+
+    .cards{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .cardMini{
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:14px;
+      padding:12px;
+      min-height:88px;
+    }
+
+    .cardMini h4{
+      margin:0 0 8px;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:700;
+    }
+
+    .cardMini div{
+      font-size:14px;
+      font-weight:700;
+      line-height:1.35;
+    }
+
+    .radarBox{
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:14px;
+      padding:10px;
+      margin-bottom:12px;
+    }
+
+    .photoGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .photo{
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:14px;
+      overflow:hidden;
+      min-height:150px;
+    }
+
+    .photo img{
+      width:100%;
+      height:150px;
+      object-fit:cover;
+      display:block;
+      background:#0c1430;
+    }
+
+    .photo .cap{
+      padding:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    .bigText{
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:14px;
+      padding:12px;
+      font-size:14px;
+      line-height:1.55;
+    }
+
+    .deptNumberLabel{
+      background:transparent !important;
+      border:none !important;
+      box-shadow:none !important;
+      color:#d9e8ff;
+      font-weight:900;
+      font-size:12px;
+      text-shadow:
+        -1px -1px 0 #0a1020,
+        1px -1px 0 #0a1020,
+        -1px 1px 0 #0a1020,
+        1px 1px 0 #0a1020;
+    }
+
+    .deptNumberLabel.selected{
+      color:#7ef0c7;
+      font-size:13px;
+    }
+
+    .status{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px solid #28365c;
+      background:#0a1227;
+      border-radius:12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .legend{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .legend span{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      display:inline-block;
+    }
+
+    @media (max-width: 1400px){
+      .grid{
+        grid-template-columns:390px 1fr;
+        grid-template-rows:48vh 40vh 42vh;
+      }
+      .leftPanel{grid-row:1 / span 3}
+      .mapPanel{grid-column:2;grid-row:1}
+      .dgfipPanel{grid-column:2;grid-row:2}
+      .infoPanel{grid-column:2;grid-row:3}
+    }
+
+    @media (max-width: 980px){
+      .grid{
+        grid-template-columns:1fr;
+        grid-template-rows:auto 48vh auto auto;
+      }
+      .leftPanel,.mapPanel,.dgfipPanel,.infoPanel{
+        grid-column:1;
+        grid-row:auto;
+      }
+      .cards,.row2,.row3,.btns,.photoGrid,.kpis{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1>DGFIP Predictor Map V5</h1>
+      <p>
+        Simulation locale non officielle, avec carte départementale, prédictions séquentielles plus sévères et plus réalistes,
+        radar d’aide à la décision, enrichissement Groq pour le texte, et photos via Wikimedia.
+      </p>
+    </div>
+
+    <div class="grid">
+      <!-- PARTIE 1 -->
+      <section class="panel leftPanel">
+        <div class="panelHeader">
+          <h2>1. Saisie & réglages</h2>
+          <span class="badge">Local only</span>
+        </div>
+        <div class="panelBody">
+          <div class="row2">
+            <div class="field">
+              <label for="listeType">Type de liste</label>
+              <select id="listeType">
+                <option value="LC">LC</option>
+                <option value="LP">LP</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="rang">Rang</label>
+              <input id="rang" type="number" min="1" placeholder="Ex: 317" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label for="groqModel">Modèle Groq</label>
+              <input id="groqModel" type="text" value="llama-3.3-70b-versatile" />
+            </div>
+            <div class="field">
+              <label for="totalPostes">Base postes simulés</label>
+              <input id="totalPostes" type="number" min="100" value="790" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="groqApiKey">Clé API Groq</label>
+            <input id="groqApiKey" type="password" placeholder="gsk_..." />
+          </div>
+
+          <div class="check">
+            <input id="prioHandicap" type="checkbox" />
+            <span>Priorité handicap / RQTH / CMI invalidité</span>
+          </div>
+          <div class="check">
+            <input id="prioConjoint" type="checkbox" />
+            <span>Priorité rapprochement conjoint / PACS</span>
+          </div>
+          <div class="check">
+            <input id="csEnfant" type="checkbox" />
+            <span>CS rapprochement résidence des enfants</span>
+          </div>
+          <div class="check">
+            <input id="csSoutien" type="checkbox" />
+            <span>CS soutien de famille</span>
+          </div>
+          <div class="check">
+            <input id="modeLonguenesse" type="checkbox" />
+            <span>Je veux aussi simuler la candidature Longuenesse (62)</span>
+          </div>
+
+          <div class="row3">
+            <div class="field">
+              <label for="pondChoix">Poids ordre des vœux</label>
+              <input id="pondChoix" type="number" min="0" max="5" step="0.1" value="1.2" />
+            </div>
+            <div class="field">
+              <label for="pondAttrac">Poids attractivité</label>
+              <input id="pondAttrac" type="number" min="0" max="5" step="0.1" value="2.2" />
+            </div>
+            <div class="field">
+              <label for="pondTension">Poids tension</label>
+              <input id="pondTension" type="number" min="0" max="5" step="0.1" value="1.8" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="souhaits">Liste de souhaits</label>
+            <textarea id="souhaits" placeholder="Un département par ligne.
+Ex:
+91 Essonne
+17 Charente-Maritime
+16 Charente
+31 Haute-Garonne
+64 Pyrénées-Atlantiques"></textarea>
+          </div>
+
+          <div class="btns">
+            <button id="btnCalc">Calculer</button>
+            <button class="secondary" id="btnExample">Exemple</button>
+            <button class="ghost" id="btnReset">Reset</button>
+            <button class="ghost" id="btnSave">Sauver local</button>
+          </div>
+
+          <div class="status" id="statusBox">
+            V5 : le moteur tape plus fort sur les départements très demandés et sur les premiers vœux trop ambitieux pour un rang LC fragile.
+          </div>
+        </div>
+      </section>
+
+      <!-- PARTIE 2 -->
+      <section class="panel mapPanel">
+        <div class="panelHeader">
+          <h2>2. Carte France / départements</h2>
+          <div class="legend">
+            <span><i class="dot" style="background:#4f6288;"></i> neutre</span>
+            <span><i class="dot" style="background:#2f7f61;"></i> dans tes vœux</span>
+            <span><i class="dot" style="background:#5b8cff;"></i> top 3</span>
+            <span><i class="dot" style="background:#7ef0c7;"></i> sélectionné</span>
+          </div>
+        </div>
+        <div class="mapWrap">
+          <div id="map"></div>
+          <div class="mapOverlay" id="mapOverlay">
+            Clique un département.  
+            Partie 3 = lecture DGFiP. Partie 4 = profil global + photos.
+          </div>
+        </div>
+      </section>
+
+      <!-- PARTIE 3 -->
+      <section class="panel dgfipPanel">
+        <div class="panelHeader">
+          <h2>3. Infos DGFiP / prédiction</h2>
+          <span class="badge" id="selectedDeptBadge">Aucun département</span>
+        </div>
+        <div class="panelBody">
+          <div class="badges" id="badges"></div>
+
+          <div class="kpis">
+            <div class="kpi">
+              <div class="t">Chance d’avoir un des 3 plus probables</div>
+              <div class="v" id="kpiTop3">-</div>
+            </div>
+            <div class="kpi">
+              <div class="t">Risque affectation d’office</div>
+              <div class="v" id="kpiOffice">-</div>
+            </div>
+            <div class="kpi">
+              <div class="t">Force de rang</div>
+              <div class="v" id="kpiRank">-</div>
+            </div>
+            <div class="kpi">
+              <div class="t">Score du département cliqué</div>
+              <div class="v" id="kpiDeptScore">-</div>
+            </div>
+          </div>
+
+          <div class="radarBox">
+            <canvas id="radarCanvas" height="180"></canvas>
+          </div>
+
+          <div class="subTitle">Top 3 prédictions</div>
+          <div class="top3" id="top3"></div>
+
+          <div class="subTitle">Lecture DGFiP du département sélectionné</div>
+          <div class="bigText" id="dgfipDeptInfo">
+            Rien de sélectionné.
+          </div>
+        </div>
+      </section>
+
+      <!-- PARTIE 4 -->
+      <section class="panel infoPanel">
+        <div class="panelHeader">
+          <h2>4. Infos globales du département</h2>
+          <span class="badge" id="globalDeptBadge">-</span>
+        </div>
+        <div class="panelBody">
+          <div class="cards">
+            <div class="cardMini">
+              <h4>Grandes villes</h4>
+              <div id="infoCities">-</div>
+            </div>
+            <div class="cardMini">
+              <h4>Population / densité</h4>
+              <div id="infoPopulation">-</div>
+            </div>
+            <div class="cardMini">
+              <h4>Mer / montagne / cadre</h4>
+              <div id="infoNature">-</div>
+            </div>
+            <div class="cardMini">
+              <h4>Logement / mobilité</h4>
+              <div id="infoHousing">-</div>
+            </div>
+          </div>
+
+          <div class="bigText" id="infoSummary">
+            Clique un département pour voir le résumé global.
+          </div>
+
+          <div class="photoGrid" id="photoGrid"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "dgfip_predictor_map_v5";
+      const GEOJSON_URL = "https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/departements-100m.geojson";
+
+      const elements = {
+        listeType: document.getElementById("listeType"),
+        rang: document.getElementById("rang"),
+        groqModel: document.getElementById("groqModel"),
+        groqApiKey: document.getElementById("groqApiKey"),
+        totalPostes: document.getElementById("totalPostes"),
+        prioHandicap: document.getElementById("prioHandicap"),
+        prioConjoint: document.getElementById("prioConjoint"),
+        csEnfant: document.getElementById("csEnfant"),
+        csSoutien: document.getElementById("csSoutien"),
+        modeLonguenesse: document.getElementById("modeLonguenesse"),
+        pondChoix: document.getElementById("pondChoix"),
+        pondAttrac: document.getElementById("pondAttrac"),
+        pondTension: document.getElementById("pondTension"),
+        souhaits: document.getElementById("souhaits"),
+        btnCalc: document.getElementById("btnCalc"),
+        btnExample: document.getElementById("btnExample"),
+        btnReset: document.getElementById("btnReset"),
+        btnSave: document.getElementById("btnSave"),
+        statusBox: document.getElementById("statusBox"),
+        mapOverlay: document.getElementById("mapOverlay"),
+        selectedDeptBadge: document.getElementById("selectedDeptBadge"),
+        globalDeptBadge: document.getElementById("globalDeptBadge"),
+        badges: document.getElementById("badges"),
+        kpiTop3: document.getElementById("kpiTop3"),
+        kpiOffice: document.getElementById("kpiOffice"),
+        kpiRank: document.getElementById("kpiRank"),
+        kpiDeptScore: document.getElementById("kpiDeptScore"),
+        top3: document.getElementById("top3"),
+        dgfipDeptInfo: document.getElementById("dgfipDeptInfo"),
+        infoCities: document.getElementById("infoCities"),
+        infoPopulation: document.getElementById("infoPopulation"),
+        infoNature: document.getElementById("infoNature"),
+        infoHousing: document.getElementById("infoHousing"),
+        infoSummary: document.getElementById("infoSummary"),
+        photoGrid: document.getElementById("photoGrid"),
+        radarCanvas: document.getElementById("radarCanvas")
+      };
+
+      const state = {
+        map: null,
+        geojsonLayer: null,
+        deptLabelMarkers: [],
+        deptLayersByCode: {},
+        predictions: [],
+        selectedDeptCode: null,
+        selectedDeptName: null
+      };
+
+      const aliases = {
+        "charente maritime":"17",
+        "charente-maritime":"17",
+        "deux sevres":"79",
+        "deux-sevres":"79",
+        "deux-sèvres":"79",
+        "haute garonne":"31",
+        "haute-garonne":"31",
+        "pyrenees atlantiques":"64",
+        "pyrenees-atlantiques":"64",
+        "pyrénées-atlantiques":"64",
+        "tarn et garonne":"82",
+        "tarn-et-garonne":"82",
+        "hautes pyrenees":"65",
+        "hautes-pyrenees":"65",
+        "hautes-pyrénées":"65",
+        "cotes d armor":"22",
+        "cotes-d-armor":"22",
+        "cotes-d'armor":"22",
+        "côtes-d'armor":"22",
+        "cotes d’armor":"22",
+        "loire atlantique":"44",
+        "loire-atlantique":"44",
+        "pas de calais":"62",
+        "pas-de-calais":"62",
+        "seine et marne":"77",
+        "seine-et-marne":"77",
+        "hauts de seine":"92",
+        "hauts-de-seine":"92",
+        "seine saint denis":"93",
+        "seine-saint-denis":"93",
+        "val de marne":"94",
+        "val-de-marne":"94",
+        "val d oise":"95",
+        "val-d-oise":"95",
+        "val d’oise":"95",
+        "pyrenees orientales":"66",
+        "pyrenees-orientales":"66",
+        "pyrénées-orientales":"66",
+        "bouches du rhone":"13",
+        "bouches-du-rhone":"13",
+        "bouches-du-rhône":"13",
+        "indre et loire":"37",
+        "indre-et-loire":"37",
+        "maine et loire":"49",
+        "maine-et-loire":"49",
+        "corse du sud":"2A",
+        "haute corse":"2B",
+        "territoire de belfort":"90",
+        "la reunion":"974",
+        "réunion":"974",
+        "essonne":"91",
+        "charente":"16",
+        "vendee":"85",
+        "vendée":"85",
+        "ariege":"09",
+        "ariège":"09",
+        "morbihan":"56",
+        "finistere":"29",
+        "finistère":"29",
+        "dordogne":"24",
+        "gers":"32",
+        "landes":"40",
+        "tarn":"81",
+        "gironde":"33",
+        "haut-rhin":"68",
+        "haut rhin":"68",
+        "bas-rhin":"67",
+        "bas rhin":"67",
+        "cote d or":"21",
+        "côte d or":"21",
+        "cote-d-or":"21",
+        "côte-d'or":"21",
+        "saone et loire":"71",
+        "saône et loire":"71",
+        "saone-et-loire":"71",
+        "saône-et-loire":"71"
+      };
+
+      const deptDB = {
+        "01": { nom:"Ain", attractivite:0.56, tension:0.62, sea:false, mountain:false, housing:"€€", bigCities:["Bourg-en-Bresse","Oyonnax"], population:"~660k", quality:0.62 },
+        "02": { nom:"Aisne", attractivite:0.33, tension:0.78, sea:false, mountain:false, housing:"€", bigCities:["Saint-Quentin","Laon","Soissons"], population:"~530k", quality:0.46 },
+        "03": { nom:"Allier", attractivite:0.39, tension:0.74, sea:false, mountain:false, housing:"€", bigCities:["Vichy","Montluçon","Moulins"], population:"~340k", quality:0.54 },
+        "04": { nom:"Alpes-de-Haute-Provence", attractivite:0.58, tension:0.52, sea:false, mountain:true, housing:"€€", bigCities:["Digne-les-Bains","Manosque"], population:"~165k", quality:0.75 },
+        "05": { nom:"Hautes-Alpes", attractivite:0.72, tension:0.38, sea:false, mountain:true, housing:"€€", bigCities:["Gap","Briançon"], population:"~145k", quality:0.83 },
+        "06": { nom:"Alpes-Maritimes", attractivite:0.90, tension:0.32, sea:true, mountain:true, housing:"€€€€", bigCities:["Nice","Cannes","Antibes"], population:"~1.1M", quality:0.89 },
+        "07": { nom:"Ardèche", attractivite:0.63, tension:0.49, sea:false, mountain:true, housing:"€€", bigCities:["Privas","Annonay","Aubenas"], population:"~330k", quality:0.74 },
+        "08": { nom:"Ardennes", attractivite:0.29, tension:0.82, sea:false, mountain:false, housing:"€", bigCities:["Charleville-Mézières","Sedan"], population:"~270k", quality:0.45 },
+        "09": { nom:"Ariège", attractivite:0.67, tension:0.46, sea:false, mountain:true, housing:"€", bigCities:["Foix","Pamiers","Saint-Girons"], population:"~160k", quality:0.79 },
+        "10": { nom:"Aube", attractivite:0.38, tension:0.72, sea:false, mountain:false, housing:"€", bigCities:["Troyes"], population:"~310k", quality:0.51 },
+        "11": { nom:"Aude", attractivite:0.66, tension:0.52, sea:true, mountain:false, housing:"€€", bigCities:["Narbonne","Carcassonne"], population:"~380k", quality:0.74 },
+        "12": { nom:"Aveyron", attractivite:0.54, tension:0.59, sea:false, mountain:true, housing:"€", bigCities:["Rodez","Millau"], population:"~280k", quality:0.72 },
+        "13": { nom:"Bouches-du-Rhône", attractivite:0.88, tension:0.44, sea:true, mountain:false, housing:"€€€", bigCities:["Marseille","Aix-en-Provence","Arles"], population:"~2.0M", quality:0.79 },
+        "14": { nom:"Calvados", attractivite:0.70, tension:0.52, sea:true, mountain:false, housing:"€€", bigCities:["Caen","Lisieux"], population:"~700k", quality:0.75 },
+        "15": { nom:"Cantal", attractivite:0.35, tension:0.79, sea:false, mountain:true, housing:"€", bigCities:["Aurillac","Saint-Flour"], population:"~145k", quality:0.65 },
+        "16": { nom:"Charente", attractivite:0.57, tension:0.61, sea:false, mountain:false, housing:"€", bigCities:["Angoulême","Cognac"], population:"~350k", quality:0.68 },
+        "17": { nom:"Charente-Maritime", attractivite:0.84, tension:0.40, sea:true, mountain:false, housing:"€€€", bigCities:["La Rochelle","Rochefort","Saintes"], population:"~660k", quality:0.86 },
+        "18": { nom:"Cher", attractivite:0.40, tension:0.70, sea:false, mountain:false, housing:"€", bigCities:["Bourges","Vierzon"], population:"~300k", quality:0.51 },
+        "19": { nom:"Corrèze", attractivite:0.50, tension:0.64, sea:false, mountain:true, housing:"€", bigCities:["Brive","Tulle"], population:"~240k", quality:0.65 },
+        "2A": { nom:"Corse-du-Sud", attractivite:0.82, tension:0.39, sea:true, mountain:true, housing:"€€€", bigCities:["Ajaccio","Porto-Vecchio"], population:"~165k", quality:0.90 },
+        "2B": { nom:"Haute-Corse", attractivite:0.78, tension:0.42, sea:true, mountain:true, housing:"€€€", bigCities:["Bastia","Calvi","Corte"], population:"~190k", quality:0.88 },
+        "21": { nom:"Côte-d'Or", attractivite:0.57, tension:0.60, sea:false, mountain:false, housing:"€€", bigCities:["Dijon","Beaune"], population:"~540k", quality:0.66 },
+        "22": { nom:"Côtes-d'Armor", attractivite:0.72, tension:0.49, sea:true, mountain:false, housing:"€€", bigCities:["Saint-Brieuc","Lannion","Dinan"], population:"~610k", quality:0.79 },
+        "23": { nom:"Creuse", attractivite:0.30, tension:0.83, sea:false, mountain:false, housing:"€", bigCities:["Guéret","Aubusson"], population:"~115k", quality:0.52 },
+        "24": { nom:"Dordogne", attractivite:0.69, tension:0.51, sea:false, mountain:false, housing:"€€", bigCities:["Périgueux","Bergerac","Sarlat"], population:"~410k", quality:0.79 },
+        "25": { nom:"Doubs", attractivite:0.54, tension:0.60, sea:false, mountain:true, housing:"€€", bigCities:["Besançon","Montbéliard"], population:"~550k", quality:0.68 },
+        "26": { nom:"Drôme", attractivite:0.68, tension:0.51, sea:false, mountain:true, housing:"€€", bigCities:["Valence","Montélimar"], population:"~520k", quality:0.74 },
+        "27": { nom:"Eure", attractivite:0.54, tension:0.64, sea:false, mountain:false, housing:"€€", bigCities:["Évreux","Vernon"], population:"~610k", quality:0.61 },
+        "28": { nom:"Eure-et-Loir", attractivite:0.47, tension:0.69, sea:false, mountain:false, housing:"€€", bigCities:["Chartres","Dreux"], population:"~430k", quality:0.58 },
+        "29": { nom:"Finistère", attractivite:0.76, tension:0.47, sea:true, mountain:false, housing:"€€", bigCities:["Brest","Quimper","Morlaix"], population:"~920k", quality:0.83 },
+        "30": { nom:"Gard", attractivite:0.75, tension:0.50, sea:false, mountain:false, housing:"€€", bigCities:["Nîmes","Alès","Bagnols"], population:"~760k", quality:0.73 },
+        "31": { nom:"Haute-Garonne", attractivite:0.89, tension:0.43, sea:false, mountain:false, housing:"€€€", bigCities:["Toulouse","Colomiers","Muret"], population:"~1.4M", quality:0.84 },
+        "32": { nom:"Gers", attractivite:0.65, tension:0.54, sea:false, mountain:false, housing:"€", bigCities:["Auch","Condom"], population:"~195k", quality:0.72 },
+        "33": { nom:"Gironde", attractivite:0.92, tension:0.42, sea:true, mountain:false, housing:"€€€€", bigCities:["Bordeaux","Mérignac","Arcachon"], population:"~1.7M", quality:0.86 },
+        "34": { nom:"Hérault", attractivite:0.90, tension:0.43, sea:true, mountain:false, housing:"€€€", bigCities:["Montpellier","Béziers","Sète"], population:"~1.25M", quality:0.84 },
+        "35": { nom:"Ille-et-Vilaine", attractivite:0.83, tension:0.46, sea:true, mountain:false, housing:"€€€", bigCities:["Rennes","Saint-Malo","Fougères"], population:"~1.1M", quality:0.81 },
+        "36": { nom:"Indre", attractivite:0.36, tension:0.77, sea:false, mountain:false, housing:"€", bigCities:["Châteauroux","Issoudun"], population:"~220k", quality:0.49 },
+        "37": { nom:"Indre-et-Loire", attractivite:0.74, tension:0.52, sea:false, mountain:false, housing:"€€", bigCities:["Tours","Amboise","Chinon"], population:"~620k", quality:0.76 },
+        "38": { nom:"Isère", attractivite:0.84, tension:0.46, sea:false, mountain:true, housing:"€€€", bigCities:["Grenoble","Vienne","Bourgoin"], population:"~1.3M", quality:0.84 },
+        "39": { nom:"Jura", attractivite:0.55, tension:0.60, sea:false, mountain:true, housing:"€€", bigCities:["Dole","Lons-le-Saunier"], population:"~260k", quality:0.70 },
+        "40": { nom:"Landes", attractivite:0.78, tension:0.45, sea:true, mountain:false, housing:"€€", bigCities:["Mont-de-Marsan","Dax","Biscarrosse"], population:"~430k", quality:0.84 },
+        "41": { nom:"Loir-et-Cher", attractivite:0.54, tension:0.64, sea:false, mountain:false, housing:"€€", bigCities:["Blois","Vendôme"], population:"~330k", quality:0.61 },
+        "42": { nom:"Loire", attractivite:0.55, tension:0.61, sea:false, mountain:true, housing:"€€", bigCities:["Saint-Étienne","Roanne"], population:"~770k", quality:0.63 },
+        "43": { nom:"Haute-Loire", attractivite:0.45, tension:0.66, sea:false, mountain:true, housing:"€", bigCities:["Le Puy-en-Velay"], population:"~225k", quality:0.67 },
+        "44": { nom:"Loire-Atlantique", attractivite:0.89, tension:0.43, sea:true, mountain:false, housing:"€€€", bigCities:["Nantes","Saint-Nazaire","Pornic"], population:"~1.45M", quality:0.84 },
+        "45": { nom:"Loiret", attractivite:0.56, tension:0.64, sea:false, mountain:false, housing:"€€", bigCities:["Orléans","Montargis"], population:"~680k", quality:0.62 },
+        "46": { nom:"Lot", attractivite:0.58, tension:0.59, sea:false, mountain:false, housing:"€", bigCities:["Cahors","Figeac"], population:"~175k", quality:0.73 },
+        "47": { nom:"Lot-et-Garonne", attractivite:0.61, tension:0.57, sea:false, mountain:false, housing:"€", bigCities:["Agen","Villeneuve-sur-Lot"], population:"~335k", quality:0.69 },
+        "48": { nom:"Lozère", attractivite:0.48, tension:0.68, sea:false, mountain:true, housing:"€", bigCities:["Mende"], population:"~78k", quality:0.71 },
+        "49": { nom:"Maine-et-Loire", attractivite:0.72, tension:0.52, sea:false, mountain:false, housing:"€€", bigCities:["Angers","Cholet","Saumur"], population:"~830k", quality:0.74 },
+        "50": { nom:"Manche", attractivite:0.62, tension:0.58, sea:true, mountain:false, housing:"€€", bigCities:["Cherbourg","Saint-Lô","Granville"], population:"~500k", quality:0.73 },
+        "51": { nom:"Marne", attractivite:0.50, tension:0.67, sea:false, mountain:false, housing:"€€", bigCities:["Reims","Châlons-en-Champagne"], population:"~565k", quality:0.58 },
+        "52": { nom:"Haute-Marne", attractivite:0.28, tension:0.85, sea:false, mountain:false, housing:"€", bigCities:["Chaumont","Saint-Dizier"], population:"~170k", quality:0.44 },
+        "53": { nom:"Mayenne", attractivite:0.47, tension:0.66, sea:false, mountain:false, housing:"€", bigCities:["Laval","Mayenne"], population:"~305k", quality:0.58 },
+        "54": { nom:"Meurthe-et-Moselle", attractivite:0.52, tension:0.64, sea:false, mountain:false, housing:"€€", bigCities:["Nancy","Lunéville"], population:"~730k", quality:0.61 },
+        "55": { nom:"Meuse", attractivite:0.25, tension:0.86, sea:false, mountain:false, housing:"€", bigCities:["Bar-le-Duc","Verdun"], population:"~185k", quality:0.43 },
+        "56": { nom:"Morbihan", attractivite:0.83, tension:0.44, sea:true, mountain:false, housing:"€€€", bigCities:["Vannes","Lorient","Auray"], population:"~770k", quality:0.85 },
+        "57": { nom:"Moselle", attractivite:0.53, tension:0.63, sea:false, mountain:false, housing:"€€", bigCities:["Metz","Thionville"], population:"~1.05M", quality:0.60 },
+        "58": { nom:"Nièvre", attractivite:0.31, tension:0.80, sea:false, mountain:false, housing:"€", bigCities:["Nevers","Cosne"], population:"~205k", quality:0.46 },
+        "59": { nom:"Nord", attractivite:0.63, tension:0.58, sea:true, mountain:false, housing:"€€", bigCities:["Lille","Dunkerque","Valenciennes"], population:"~2.6M", quality:0.67 },
+        "60": { nom:"Oise", attractivite:0.56, tension:0.63, sea:false, mountain:false, housing:"€€", bigCities:["Beauvais","Compiègne"], population:"~830k", quality:0.61 },
+        "61": { nom:"Orne", attractivite:0.39, tension:0.74, sea:false, mountain:false, housing:"€", bigCities:["Alençon","Argentan"], population:"~280k", quality:0.54 },
+        "62": { nom:"Pas-de-Calais", attractivite:0.52, tension:0.66, sea:true, mountain:false, housing:"€", bigCities:["Arras","Calais","Boulogne","Saint-Omer"], population:"~1.5M", quality:0.64, longuenesseBonus:0.45 },
+        "63": { nom:"Puy-de-Dôme", attractivite:0.63, tension:0.57, sea:false, mountain:true, housing:"€€", bigCities:["Clermont-Ferrand","Issoire"], population:"~670k", quality:0.76 },
+        "64": { nom:"Pyrénées-Atlantiques", attractivite:0.84, tension:0.43, sea:true, mountain:true, housing:"€€€", bigCities:["Pau","Bayonne","Biarritz"], population:"~700k", quality:0.89 },
+        "65": { nom:"Hautes-Pyrénées", attractivite:0.71, tension:0.49, sea:false, mountain:true, housing:"€€", bigCities:["Tarbes","Lourdes"], population:"~230k", quality:0.81 },
+        "66": { nom:"Pyrénées-Orientales", attractivite:0.79, tension:0.47, sea:true, mountain:true, housing:"€€", bigCities:["Perpignan","Argelès"], population:"~490k", quality:0.82 },
+        "67": { nom:"Bas-Rhin", attractivite:0.72, tension:0.51, sea:false, mountain:false, housing:"€€€", bigCities:["Strasbourg","Haguenau"], population:"~1.15M", quality:0.74 },
+        "68": { nom:"Haut-Rhin", attractivite:0.64, tension:0.56, sea:false, mountain:true, housing:"€€", bigCities:["Mulhouse","Colmar"], population:"~780k", quality:0.71 },
+        "69": { nom:"Rhône", attractivite:0.88, tension:0.45, sea:false, mountain:false, housing:"€€€€", bigCities:["Lyon","Villeurbanne"], population:"~1.9M", quality:0.80 },
+        "70": { nom:"Haute-Saône", attractivite:0.36, tension:0.77, sea:false, mountain:false, housing:"€", bigCities:["Vesoul"], population:"~235k", quality:0.50 },
+        "71": { nom:"Saône-et-Loire", attractivite:0.52, tension:0.63, sea:false, mountain:false, housing:"€€", bigCities:["Mâcon","Chalon-sur-Saône"], population:"~550k", quality:0.62 },
+        "72": { nom:"Sarthe", attractivite:0.51, tension:0.62, sea:false, mountain:false, housing:"€€", bigCities:["Le Mans","La Flèche"], population:"~565k", quality:0.60 },
+        "73": { nom:"Savoie", attractivite:0.85, tension:0.40, sea:false, mountain:true, housing:"€€€", bigCities:["Chambéry","Albertville"], population:"~450k", quality:0.87 },
+        "74": { nom:"Haute-Savoie", attractivite:0.94, tension:0.31, sea:false, mountain:true, housing:"€€€€", bigCities:["Annecy","Thonon","Annemasse"], population:"~860k", quality:0.91 },
+        "75": { nom:"Paris", attractivite:0.79, tension:0.54, sea:false, mountain:false, housing:"€€€€", bigCities:["Paris"], population:"~2.1M", quality:0.73 },
+        "76": { nom:"Seine-Maritime", attractivite:0.56, tension:0.61, sea:true, mountain:false, housing:"€€", bigCities:["Rouen","Le Havre","Dieppe"], population:"~1.25M", quality:0.66 },
+        "77": { nom:"Seine-et-Marne", attractivite:0.65, tension:0.60, sea:false, mountain:false, housing:"€€", bigCities:["Melun","Meaux","Serris"], population:"~1.45M", quality:0.63 },
+        "78": { nom:"Yvelines", attractivite:0.76, tension:0.54, sea:false, mountain:false, housing:"€€€", bigCities:["Versailles","Saint-Germain","Mantes"], population:"~1.45M", quality:0.72 },
+        "79": { nom:"Deux-Sèvres", attractivite:0.55, tension:0.62, sea:false, mountain:false, housing:"€", bigCities:["Niort","Bressuire"], population:"~375k", quality:0.65 },
+        "80": { nom:"Somme", attractivite:0.42, tension:0.74, sea:true, mountain:false, housing:"€", bigCities:["Amiens","Abbeville"], population:"~570k", quality:0.56 },
+        "81": { nom:"Tarn", attractivite:0.63, tension:0.56, sea:false, mountain:false, housing:"€", bigCities:["Albi","Castres"], population:"~395k", quality:0.71 },
+        "82": { nom:"Tarn-et-Garonne", attractivite:0.64, tension:0.55, sea:false, mountain:false, housing:"€", bigCities:["Montauban","Moissac"], population:"~265k", quality:0.71 },
+        "83": { nom:"Var", attractivite:0.90, tension:0.36, sea:true, mountain:false, housing:"€€€€", bigCities:["Toulon","Hyères","Fréjus"], population:"~1.1M", quality:0.86 },
+        "84": { nom:"Vaucluse", attractivite:0.74, tension:0.50, sea:false, mountain:false, housing:"€€", bigCities:["Avignon","Carpentras"], population:"~570k", quality:0.73 },
+        "85": { nom:"Vendée", attractivite:0.83, tension:0.44, sea:true, mountain:false, housing:"€€", bigCities:["La Roche-sur-Yon","Les Sables"], population:"~700k", quality:0.84 },
+        "86": { nom:"Vienne", attractivite:0.54, tension:0.61, sea:false, mountain:false, housing:"€", bigCities:["Poitiers","Châtellerault"], population:"~440k", quality:0.63 },
+        "87": { nom:"Haute-Vienne", attractivite:0.48, tension:0.65, sea:false, mountain:false, housing:"€", bigCities:["Limoges"], population:"~375k", quality:0.59 },
+        "88": { nom:"Vosges", attractivite:0.37, tension:0.76, sea:false, mountain:true, housing:"€", bigCities:["Épinal","Saint-Dié"], population:"~360k", quality:0.54 },
+        "89": { nom:"Yonne", attractivite:0.45, tension:0.68, sea:false, mountain:false, housing:"€", bigCities:["Auxerre","Sens"], population:"~335k", quality:0.57 },
+        "90": { nom:"Territoire de Belfort", attractivite:0.41, tension:0.71, sea:false, mountain:false, housing:"€€", bigCities:["Belfort"], population:"~140k", quality:0.56 },
+        "91": { nom:"Essonne", attractivite:0.79, tension:0.56, sea:false, mountain:false, housing:"€€€", bigCities:["Évry-Courcouronnes","Massy","Corbeil"], population:"~1.3M", quality:0.69 },
+        "92": { nom:"Hauts-de-Seine", attractivite:0.75, tension:0.58, sea:false, mountain:false, housing:"€€€€", bigCities:["Nanterre","Boulogne","Courbevoie"], population:"~1.6M", quality:0.68 },
+        "93": { nom:"Seine-Saint-Denis", attractivite:0.47, tension:0.79, sea:false, mountain:false, housing:"€€", bigCities:["Saint-Denis","Montreuil","Aubervilliers"], population:"~1.7M", quality:0.50 },
+        "94": { nom:"Val-de-Marne", attractivite:0.70, tension:0.60, sea:false, mountain:false, housing:"€€€", bigCities:["Créteil","Vincennes","Ivry"], population:"~1.4M", quality:0.64 },
+        "95": { nom:"Val-d'Oise", attractivite:0.61, tension:0.66, sea:false, mountain:false, housing:"€€", bigCities:["Cergy","Argenteuil","Sarcelles"], population:"~1.25M", quality:0.60 },
+        "971": { nom:"Guadeloupe", attractivite:0.88, tension:0.30, sea:true, mountain:false, housing:"€€", bigCities:["Pointe-à-Pitre","Basse-Terre"], population:"~380k", quality:0.84 },
+        "972": { nom:"Martinique", attractivite:0.87, tension:0.30, sea:true, mountain:false, housing:"€€", bigCities:["Fort-de-France"], population:"~350k", quality:0.84 },
+        "973": { nom:"Guyane", attractivite:0.50, tension:0.60, sea:true, mountain:false, housing:"€€", bigCities:["Cayenne","Kourou"], population:"~310k", quality:0.61 },
+        "974": { nom:"La Réunion", attractivite:0.92, tension:0.26, sea:true, mountain:true, housing:"€€", bigCities:["Saint-Denis","Saint-Pierre"], population:"~880k", quality:0.91 },
+        "976": { nom:"Mayotte", attractivite:0.32, tension:0.90, sea:true, mountain:false, housing:"€€", bigCities:["Mamoudzou"], population:"~320k", quality:0.42 }
+      };
+
+      function setStatus(msg){
+        elements.statusBox.textContent = msg;
+      }
+
+      function normalizeText(str){
+        return (str || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[’']/g," ")
+          .replace(/-/g," ")
+          .replace(/\s+/g," ")
+          .trim();
+      }
+
+      function clamp(n,min,max){
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function pct(n){
+        return `${n.toFixed(1)}%`;
+      }
+
+      function scoreStr(n){
+        return n.toFixed(3);
+      }
+
+      function parsePopulation(popStr){
+        if(!popStr) return 300000;
+        const s = String(popStr).toLowerCase().replace("~","").trim();
+        if(s.includes("m")){
+          const num = parseFloat(s.replace("m","").trim());
+          return isNaN(num) ? 300000 : Math.round(num * 1000000);
+        }
+        if(s.includes("k")){
+          const num = parseFloat(s.replace("k","").trim());
+          return isNaN(num) ? 300000 : Math.round(num * 1000);
+        }
+        const num = parseInt(s.replace(/[^\d]/g,""),10);
+        return isNaN(num) ? 300000 : num;
+      }
+
+      function housingToScore(h){
+        if(h === "€") return 0.15;
+        if(h === "€€") return 0.35;
+        if(h === "€€€") return 0.62;
+        if(h === "€€€€") return 0.90;
+        return 0.45;
+      }
+
+      function metroScore(meta){
+        const cities = meta.bigCities || [];
+        const pop = parsePopulation(meta.population);
+        let base = 0;
+        if(pop >= 1500000) base += 0.35;
+        else if(pop >= 900000) base += 0.26;
+        else if(pop >= 500000) base += 0.18;
+        else if(pop >= 250000) base += 0.10;
+        base += Math.min(cities.length * 0.06, 0.24);
+        return clamp(base, 0, 1);
+      }
+
+      function capacityIndex(meta){
+        const pop = parsePopulation(meta.population);
+        let popScore = 0;
+        if(pop >= 1800000) popScore = 1.00;
+        else if(pop >= 1300000) popScore = 0.88;
+        else if(pop >= 900000) popScore = 0.74;
+        else if(pop >= 600000) popScore = 0.61;
+        else if(pop >= 350000) popScore = 0.48;
+        else if(pop >= 180000) popScore = 0.34;
+        else popScore = 0.22;
+
+        const cityCountScore = clamp((meta.bigCities?.length || 1) / 4, 0.20, 1);
+        const tensionScore = clamp(meta.tension || 0.5, 0, 1);
+        const metro = metroScore(meta);
+
+        return clamp(
+          (popScore * 0.46) +
+          (cityCountScore * 0.16) +
+          (tensionScore * 0.24) +
+          (metro * 0.14),
+          0.05,
+          1
+        );
+      }
+
+      function demandIndex(meta){
+        const housingScore = housingToScore(meta.housing);
+        const metro = metroScore(meta);
+        const seaBonus = meta.sea ? 0.10 : 0;
+        const mountainBonus = meta.mountain ? 0.08 : 0;
+
+        return clamp(
+          ((meta.attractivite || 0.5) * 0.40) +
+          ((meta.quality || 0.5) * 0.18) +
+          (housingScore * 0.14) +
+          (metro * 0.12) +
+          seaBonus +
+          mountainBonus,
+          0.05,
+          1
+        );
+      }
+
+      function securityProfile(meta, ordre, totalWishes){
+        if(totalWishes <= 1) return 0;
+        const lateRatio = ordre / totalWishes;
+        const lowDemand = 1 - demandIndex(meta);
+        const goodCapacity = capacityIndex(meta);
+
+        if(lateRatio < 0.42) return 0;
+
+        return clamp(
+          ((lateRatio - 0.42) / 0.58) * 0.28 +
+          (lowDemand * 0.15) +
+          (goodCapacity * 0.07),
+          0,
+          0.34
+        );
+      }
+
+      function wishOrderFactor(ordre, totalWishes, pondChoix){
+        const pos = (ordre - 1) / Math.max(totalWishes - 1, 1);
+        const earlyBoost = 1 - pos;
+        return clamp(
+          1 + ((earlyBoost - 0.5) * pondChoix * 0.10),
+          0.84,
+          1.16
+        );
+      }
+
+      function ambitionPenalty(meta, ordre, totalWishes, rankStrength, f){
+        const dem = demandIndex(meta);
+        const cap = capacityIndex(meta);
+        const posRatio = ordre / Math.max(totalWishes, 1);
+
+        if(posRatio > 0.45) return 0;
+
+        const rankFragility = 1 - rankStrength;
+        const overDemand = Math.max(0, dem - cap);
+        const glam = Math.max(0, (meta.attractivite || 0.5) - 0.72);
+        const earlyPressure = 1 - posRatio;
+
+        let penalty =
+          (rankFragility * 0.28) +
+          (overDemand * 0.34) +
+          (glam * 0.22) +
+          (earlyPressure * 0.16);
+
+        if(f.listeType === "LC") penalty *= 1.12;
+        if(ordre <= 5 && dem > 0.78) penalty *= 1.18;
+        if(ordre <= 10 && dem > 0.84) penalty *= 1.15;
+
+        return clamp(penalty, 0, 0.55);
+      }
+
+      function rankStrengthFromInputs(rang, totalPostes, listeType){
+        const ratio = clamp(rang / Math.max(totalPostes,1), 0, 4);
+        let s = 1 - ratio;
+
+        if(listeType === "LC"){
+          s *= 0.50;
+          if(rang > totalPostes * 0.25) s *= 0.88;
+          if(rang > totalPostes * 0.35) s *= 0.86;
+        } else {
+          s *= 1.04;
+        }
+
+        return clamp(s, 0.015, 0.98);
+      }
+
+      function badgeHtml(stateData, wishesCount){
+        const arr = [];
+        arr.push(`<span class="badge">Liste ${stateData.listeType}</span>`);
+        arr.push(`<span class="badge">Rang ${stateData.rang || "?"}</span>`);
+        arr.push(`<span class="badge">${wishesCount} vœux</span>`);
+        if(stateData.prioHandicap) arr.push(`<span class="badge">Handicap/RQTH</span>`);
+        if(stateData.prioConjoint) arr.push(`<span class="badge">Conjoint/PACS</span>`);
+        if(stateData.csEnfant) arr.push(`<span class="badge">CS enfants</span>`);
+        if(stateData.csSoutien) arr.push(`<span class="badge">CS soutien</span>`);
+        if(stateData.modeLonguenesse) arr.push(`<span class="badge">Simulation Longuenesse</span>`);
+        return arr.join("");
+      }
+
+      function findDeptCode(raw){
+        const clean = normalizeText(raw);
+        const codeMatch = clean.match(/\b(97[1-6]|2a|2b|0[1-9]|[1-8][0-9]|9[0-5])\b/i);
+        if(codeMatch) return codeMatch[1].toUpperCase();
+        if(aliases[clean]) return aliases[clean];
+
+        for(const [code,obj] of Object.entries(deptDB)){
+          const nomNorm = normalizeText(obj.nom);
+          if(nomNorm === clean) return code;
+          if(clean.includes(nomNorm)) return code;
+        }
+        return null;
+      }
+
+      function parseSouhaits(text){
+        const lines = text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+        const seen = new Set();
+        const out = [];
+        for(const line of lines){
+          const code = findDeptCode(line);
+          if(!code || seen.has(code)) continue;
+          seen.add(code);
+          out.push({ code, nom: deptDB[code]?.nom || line, raw: line });
+        }
+        return out;
+      }
+
+      function getFormData(){
+        return {
+          listeType: elements.listeType.value,
+          rang: elements.rang.value,
+          groqModel: elements.groqModel.value,
+          groqApiKey: elements.groqApiKey.value,
+          totalPostes: elements.totalPostes.value,
+          prioHandicap: elements.prioHandicap.checked,
+          prioConjoint: elements.prioConjoint.checked,
+          csEnfant: elements.csEnfant.checked,
+          csSoutien: elements.csSoutien.checked,
+          modeLonguenesse: elements.modeLonguenesse.checked,
+          pondChoix: elements.pondChoix.value,
+          pondAttrac: elements.pondAttrac.value,
+          pondTension: elements.pondTension.value,
+          souhaits: elements.souhaits.value
+        };
+      }
+
+      function setFormData(data){
+        if(!data) return;
+        elements.listeType.value = data.listeType || "LC";
+        elements.rang.value = data.rang || "";
+        elements.groqModel.value = data.groqModel || "llama-3.3-70b-versatile";
+        elements.groqApiKey.value = data.groqApiKey || "";
+        elements.totalPostes.value = data.totalPostes || "790";
+        elements.prioHandicap.checked = !!data.prioHandicap;
+        elements.prioConjoint.checked = !!data.prioConjoint;
+        elements.csEnfant.checked = !!data.csEnfant;
+        elements.csSoutien.checked = !!data.csSoutien;
+        elements.modeLonguenesse.checked = !!data.modeLonguenesse;
+        elements.pondChoix.value = data.pondChoix || "1.2";
+        elements.pondAttrac.value = data.pondAttrac || "2.2";
+        elements.pondTension.value = data.pondTension || "1.8";
+        elements.souhaits.value = data.souhaits || "";
+      }
+
+      function saveLocal(){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormData()));
+        setStatus("Sauvegarde locale OK.");
+      }
+
+      function loadLocal(){
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        try{
+          setFormData(JSON.parse(raw));
+          setStatus("Sauvegarde locale rechargée.");
+        }catch(e){
+          console.error(e);
+        }
+      }
+
+      function computeConditionalChance({f, meta, ordre, totalWishes, rankStrength}){
+        const pondAttrac = Number(f.pondAttrac || 2.2);
+        const pondTension = Number(f.pondTension || 1.8);
+        const pondChoix = Number(f.pondChoix || 1.2);
+
+        const cap = capacityIndex(meta);
+        const dem = demandIndex(meta);
+        const sec = securityProfile(meta, ordre, totalWishes);
+        const orderFactor = wishOrderFactor(ordre, totalWishes, pondChoix);
+        const ambition = ambitionPenalty(meta, ordre, totalWishes, rankStrength, f);
+
+        let priorityBoost = 0;
+        if(f.prioHandicap) priorityBoost += 0.12;
+        if(f.prioConjoint) priorityBoost += 0.06;
+        if(f.csEnfant) priorityBoost += 0.04;
+        if(f.csSoutien) priorityBoost += 0.03;
+
+        const weightedDemand = clamp(dem * (0.78 + pondAttrac * 0.18), 0.04, 1.55);
+        const weightedTension = clamp((meta.tension || 0.5) * (0.75 + pondTension * 0.16), 0.04, 1.35);
+
+        let chance =
+          0.004 +
+          (rankStrength * 0.37) +
+          (cap * 0.22) +
+          (weightedTension * 0.10) -
+          (weightedDemand * 0.29) -
+          (ambition * 0.34) +
+          (sec * 0.18) +
+          priorityBoost;
+
+        chance *= orderFactor;
+
+        if(f.listeType === "LC"){
+          chance *= 0.90;
+
+          if(ordre <= 5 && dem > 0.75) chance *= 0.80;
+          if(ordre <= 10 && dem > 0.82) chance *= 0.84;
+          if(ordre <= 15 && dem > 0.88) chance *= 0.86;
+
+          if(ordre > Math.max(18, Math.floor(totalWishes * 0.55)) && dem < 0.55) chance *= 1.12;
+          if(ordre > Math.max(24, Math.floor(totalWishes * 0.70)) && cap > 0.48 && dem < 0.50) chance *= 1.08;
+        } else {
+          chance *= 1.08;
+        }
+
+        if(meta.attractivite < 0.38 && cap > 0.42) chance *= 1.14;
+        if(meta.attractivite > 0.88 && ordre <= 20) chance *= 0.84;
+        if(meta.tension > 0.80) chance *= 1.03;
+
+        if(f.modeLonguenesse && meta.nom === "Pas-de-Calais"){
+          chance *= 1.14 + (deptDB["62"]?.longuenesseBonus || 0) * 0.12;
+        }
+
+        return clamp(chance, 0.001, 0.42);
+      }
+
+      function buildPredictions(){
+        const f = getFormData();
+        const wishes = parseSouhaits(f.souhaits);
+        const rang = Number(f.rang || 0);
+        const totalPostes = Math.max(Number(f.totalPostes || 790), 50);
+
+        elements.badges.innerHTML = badgeHtml(f, wishes.length);
+
+        if(!rang || !wishes.length){
+          state.predictions = [];
+          elements.kpiTop3.textContent = "-";
+          elements.kpiOffice.textContent = "-";
+          elements.kpiRank.textContent = "-";
+          elements.kpiDeptScore.textContent = "-";
+          elements.top3.innerHTML = `<div class="topCard">Rien à calculer.</div>`;
+          updateMapStyling();
+          return [];
+        }
+
+        const rankStrength = rankStrengthFromInputs(rang, totalPostes, f.listeType);
+        const wishCodeSet = new Set(wishes.map(w=>w.code));
+
+        let remaining = 1;
+        const results = [];
+
+        for(let idx = 0; idx < wishes.length; idx++){
+          const w = wishes[idx];
+          const meta = deptDB[w.code] || {
+            nom:w.nom, attractivite:0.50, tension:0.50, quality:0.50, sea:false, mountain:false,
+            housing:"€€", bigCities:[w.nom], population:"~300k"
+          };
+
+          const ordre = idx + 1;
+          const conditionalChance = computeConditionalChance({
+            f, meta, ordre, totalWishes:wishes.length, rankStrength
+          });
+
+          const assignmentProbability = remaining * conditionalChance;
+          remaining *= (1 - conditionalChance);
+
+          const cap = capacityIndex(meta);
+          const dem = demandIndex(meta);
+          const sec = securityProfile(meta, ordre, wishes.length);
+          const ambition = ambitionPenalty(meta, ordre, wishes.length, rankStrength, f);
+
+          const score =
+            (rankStrength * 0.34) +
+            (cap * 0.22) -
+            (dem * 0.24) -
+            (ambition * 0.20) +
+            (sec * 0.12) +
+            (conditionalChance * 0.32);
+
+          results.push({
+            ordre,
+            code: w.code,
+            nom: meta.nom,
+            score: clamp(score, 0.001, 10),
+            proba: assignmentProbability * 100,
+            conditionalChance: conditionalChance * 100,
+            remainingAfter: remaining * 100,
+            attractivite: meta.attractivite,
+            tension: meta.tension,
+            quality: meta.quality,
+            sea: !!meta.sea,
+            mountain: !!meta.mountain,
+            inWishList: wishCodeSet.has(w.code),
+            capacity: cap,
+            demand: dem,
+            security: sec,
+            ambition
+          });
+        }
+
+        const officeRisk = clamp(remaining * 100, 0.5, 99.5);
+        const sorted = [...results].sort((a,b) => b.proba - a.proba);
+        const top3 = sorted.slice(0,3);
+        const chanceTop3 = top3.reduce((a,b)=>a+b.proba,0);
+
+        elements.kpiTop3.textContent = pct(chanceTop3);
+        elements.kpiOffice.textContent = pct(officeRisk);
+        elements.kpiRank.textContent = `${Math.round(clamp(rankStrength,0,1)*100)}/100`;
+
+        elements.top3.innerHTML = top3.map((r, i) => `
+          <div class="topCard">
+            <h3>#${i+1} · ${r.code} ${r.nom}</h3>
+            <div class="pct">${pct(r.proba)}</div>
+            <div class="bar"><span style="width:${clamp(r.proba,0,100)}%"></span></div>
+            <div class="small muted">
+              vœu n°${r.ordre} · chance cond. ${pct(r.conditionalChance)} · demande ${Math.round(r.demand*100)}/100 · capacité ${Math.round(r.capacity*100)}/100 · ambition ${Math.round(r.ambition*100)}/100
+            </div>
+          </div>
+        `).join("");
+
+        state.predictions = results;
+        updateMapStyling();
+
+        if(state.selectedDeptCode){
+          const selected = results.find(x => x.code === state.selectedDeptCode);
+          updateDgfipPanelForDept(state.selectedDeptCode, state.selectedDeptName, selected);
+          drawRadar(selected);
+        } else {
+          drawRadar(null);
+        }
+
+        setStatus(`Calcul V5 OK. ${wishes.length} vœux analysés. Risque d’office simulé: ${pct(officeRisk)}.`);
+        return results;
+      }
+
+      function getPredictionByCode(code){
+        return state.predictions.find(p => p.code === code) || null;
+      }
+
+      function updateDgfipPanelForDept(code, name, pred){
+        elements.selectedDeptBadge.textContent = code ? `${code} ${name}` : "Aucun département";
+        elements.globalDeptBadge.textContent = code ? `${code} ${name}` : "-";
+
+        if(!code){
+          elements.kpiDeptScore.textContent = "-";
+          elements.dgfipDeptInfo.textContent = "Aucun département sélectionné.";
+          return;
+        }
+
+        const meta = deptDB[code] || {};
+        elements.kpiDeptScore.textContent = pred ? scoreStr(pred.score) : "hors liste";
+
+        const f = getFormData();
+        let txt = `<strong>${code} ${name}</strong><br><br>`;
+
+        if(pred){
+          txt += `Ce département est dans ta liste au rang <strong>${pred.ordre}</strong>. `;
+          txt += `Probabilité finale simulée <strong>${pct(pred.proba)}</strong>. `;
+          txt += `Chance conditionnelle si on arrive jusqu’ici <strong>${pct(pred.conditionalChance)}</strong>. `;
+          txt += `Probabilité résiduelle de continuer après ce vœu <strong>${pct(pred.remainingAfter)}</strong>. `;
+        } else {
+          txt += `Ce département n’est pas dans ta liste actuelle. `;
+        }
+
+        txt += `<br><br>`;
+        txt += `Demande estimée <strong>${Math.round((pred?.demand ?? demandIndex(meta)) * 100)}/100</strong>, `;
+        txt += `capacité d’absorption estimée <strong>${Math.round((pred?.capacity ?? capacityIndex(meta)) * 100)}/100</strong>, `;
+        txt += `malus d’ambition <strong>${Math.round((pred?.ambition ?? 0) * 100)}/100</strong>, `;
+        txt += `tension besoins <strong>${Math.round((meta.tension || 0.5) * 100)}/100</strong>. `;
+
+        if(pred && pred.security > 0.08){
+          txt += `Ce vœu joue un rôle de sécurisation. `;
+        }
+
+        if(f.prioHandicap){
+          txt += `Priorité handicap activée. `;
+        }
+        if(f.prioConjoint){
+          txt += `Priorité conjoint/PACS activée. `;
+        }
+        if(f.csEnfant || f.csSoutien){
+          txt += `Critère(s) supplémentaire(s) activé(s). `;
+        }
+
+        if(code === "62" && f.modeLonguenesse){
+          txt += `Simulation Longuenesse active pour le 62. `;
+        }
+
+        txt += `<br><br><span class="muted">Lecture rapide :</span> `;
+        if(pred){
+          if(pred.proba >= 15) txt += `ça sort bien.`;
+          else if(pred.proba >= 8) txt += `c’est crédible.`;
+          else if(pred.proba >= 4) txt += `c’est jouable mais chaud.`;
+          else if(pred.proba >= 2) txt += `c’est fragile.`;
+          else txt += `ça reste faible.`;
+        } else {
+          txt += `ajoute-le à la liste pour le simuler.`;
+        }
+
+        elements.dgfipDeptInfo.innerHTML = txt;
+      }
+
+      function drawRadar(pred){
+        const canvas = elements.radarCanvas;
+        const ctx = canvas.getContext("2d");
+        const w = canvas.width = canvas.clientWidth * devicePixelRatio;
+        const h = canvas.height = canvas.clientHeight * devicePixelRatio;
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+        ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+
+        const cx = canvas.clientWidth / 2;
+        const cy = canvas.clientHeight / 2;
+        const radius = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.32;
+        const labels = ["Affectation","Capacité","Sécurisation","Cadre vie","Demande"];
+        const values = pred ? [
+          clamp((pred.proba || 0) / 20, 0, 1),
+          clamp(pred.capacity || 0.5, 0, 1),
+          clamp((pred.security || 0) / 0.25, 0, 1),
+          clamp(pred.quality || 0.5, 0, 1),
+          clamp(pred.demand || 0.5, 0, 1)
+        ] : [0.35,0.45,0.30,0.5,0.5];
+
+        for(let ring=1; ring<=5; ring++){
+          ctx.beginPath();
+          for(let i=0;i<labels.length;i++){
+            const angle = -Math.PI/2 + (Math.PI*2 * i / labels.length);
+            const r = radius * ring / 5;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = "rgba(120,150,220,.18)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        for(let i=0;i<labels.length;i++){
+          const angle = -Math.PI/2 + (Math.PI*2 * i / labels.length);
+          const x = cx + Math.cos(angle) * radius;
+          const y = cy + Math.sin(angle) * radius;
+          ctx.beginPath();
+          ctx.moveTo(cx,cy);
+          ctx.lineTo(x,y);
+          ctx.strokeStyle = "rgba(120,150,220,.18)";
+          ctx.stroke();
+
+          const lx = cx + Math.cos(angle) * (radius + 22);
+          const ly = cy + Math.sin(angle) * (radius + 18);
+          ctx.fillStyle = "#9ab0d8";
+          ctx.font = "12px Inter, Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(labels[i], lx, ly);
+        }
+
+        ctx.beginPath();
+        for(let i=0;i<values.length;i++){
+          const angle = -Math.PI/2 + (Math.PI*2 * i / values.length);
+          const r = radius * values[i];
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "rgba(98,229,160,.18)";
+        ctx.strokeStyle = "rgba(110,240,194,.95)";
+        ctx.lineWidth = 2;
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      function styleForFeature(feature){
+        const code = String(feature.properties.code).toUpperCase();
+        const pred = getPredictionByCode(code);
+        const isSelected = state.selectedDeptCode === code;
+
+        let fill = "#344566";
+        let weight = 1;
+        let color = "#6f84b0";
+        let fillOpacity = 0.45;
+
+        if(pred){
+          fill = "#2f7f61";
+          fillOpacity = clamp(0.25 + pred.proba / 24, 0.28, 0.78);
+          color = "#7dc8ae";
+        }
+
+        const sorted = [...state.predictions].sort((a,b)=>b.proba-a.proba).slice(0,3).map(x=>x.code);
+        if(sorted.includes(code)){
+          fill = "#355fd1";
+          color = "#8cb6ff";
+          fillOpacity = 0.68;
+        }
+
+        if(isSelected){
+          fill = "#46cfa2";
+          color = "#dffff5";
+          weight = 2.2;
+          fillOpacity = 0.85;
+        }
+
+        return {
+          color,
+          weight,
+          fillColor: fill,
+          fillOpacity
+        };
+      }
+
+      function updateMapStyling(){
+        if(state.geojsonLayer){
+          state.geojsonLayer.eachLayer(layer => {
+            layer.setStyle(styleForFeature(layer.feature));
+          });
+        }
+
+        state.deptLabelMarkers.forEach(m => {
+          const code = m.options.deptCode;
+          const el = m.getElement();
+          if(!el) return;
+          el.classList.toggle("selected", state.selectedDeptCode === code);
+        });
+      }
+
+      function handleDeptClick(code, name){
+        state.selectedDeptCode = code;
+        state.selectedDeptName = name;
+
+        const pred = getPredictionByCode(code);
+        updateDgfipPanelForDept(code, name, pred);
+        drawRadar(pred);
+        updateGlobalInfo(code, name, pred);
+        updateMapStyling();
+
+        elements.mapOverlay.textContent = `${code} ${name} sélectionné. Partie 3 = lecture DGFiP. Partie 4 = profil global + photos.`;
+      }
+
+      async function updateGlobalInfo(code, name, pred){
+        const meta = deptDB[code] || {};
+        elements.infoCities.textContent = (meta.bigCities || []).join(", ") || "—";
+        elements.infoPopulation.textContent = `${meta.population || "—"} · attractivité ${Math.round((meta.attractivite || 0.5)*100)}/100`;
+        elements.infoNature.textContent = `${meta.sea ? "mer" : "pas mer"} · ${meta.mountain ? "montagne" : "plutôt plat"} · qualité ${Math.round((meta.quality || 0.5)*100)}/100`;
+        elements.infoHousing.textContent = `niveau logement ${meta.housing || "—"} · tension ${Math.round((meta.tension || 0.5)*100)}/100`;
+
+        elements.infoSummary.innerHTML = `
+          <strong>${code} ${name}</strong><br><br>
+          Résumé local immédiat : ${(meta.bigCities || []).join(", ") || "villes principales non renseignées"}.
+          ${
+            meta.sea && meta.mountain
+              ? "Département mixte mer + relief."
+              : meta.sea
+                ? "Département côtier."
+                : meta.mountain
+                  ? "Département à relief/montagne."
+                  : "Département surtout intérieur."
+          }
+          ${
+            pred
+              ? ` Dans la simulation V5, il ressort à ${pct(pred.proba)} au vœu n°${pred.ordre}.`
+              : ` Il n'est pas dans ta liste actuelle.`
+          }
+        `;
+
+        loadWikimediaPhotos(name);
+        await enrichWithGroq(code, name, pred, meta);
+      }
+
+      async function loadWikimediaPhotos(deptName){
+        elements.photoGrid.innerHTML = "";
+        const queries = [
+          `${deptName} département France`,
+          `${deptName} paysage France`
+        ];
+
+        try{
+          const cards = [];
+          for(const q of queries){
+            const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&prop=imageinfo&iiprop=url&iiurlwidth=800&format=json&origin=*`;
+            const res = await fetch(url);
+            const json = await res.json();
+            const pages = json?.query?.pages ? Object.values(json.query.pages) : [];
+            const first = pages.find(p => p.imageinfo?.[0]?.thumburl || p.imageinfo?.[0]?.url);
+            if(first){
+              const img = first.imageinfo[0].thumburl || first.imageinfo[0].url;
+              cards.push(`
+                <div class="photo">
+                  <img src="${img}" alt="${deptName}">
+                  <div class="cap">${first.title.replace("File:","")}</div>
+                </div>
+              `);
+            }
+          }
+          elements.photoGrid.innerHTML = cards.join("") || `
+            <div class="photo">
+              <div class="cap" style="padding:16px;">Pas de photo trouvée là tout de suite.</div>
+            </div>
+          `;
+        }catch(err){
+          console.error(err);
+          elements.photoGrid.innerHTML = `
+            <div class="photo">
+              <div class="cap" style="padding:16px;">Erreur photo Wikimedia.</div>
+            </div>
+          `;
+        }
+      }
+
+      async function enrichWithGroq(code, name, pred, meta){
+        const apiKey = elements.groqApiKey.value.trim();
+        const model = elements.groqModel.value.trim();
+
+        if(!apiKey){
+          return;
+        }
+
+        const prompt = `
+Tu es un assistant qui retourne UNIQUEMENT du JSON valide.
+Donne un résumé factuel, concis, utile pour un candidat DGFiP qui évalue le département ${code} ${name}.
+
+Format exact attendu :
+{
+  "resume":"string",
+  "grandes_villes":["..."],
+  "population_approx":"string",
+  "mer":"oui/non",
+  "montagne":"oui/non",
+  "logement":"string",
+  "mobilite":"string",
+  "ambiance":"string"
+}
+
+Contraintes :
+- Français
+- Pas de markdown
+- Réponse strictement JSON
+- Si incertain, écris "approximation"
+`;
+
+        try{
+          setStatus(`Groq: enrichissement en cours pour ${code} ${name}...`);
+
+          const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method:"POST",
+            headers:{
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+              model,
+              temperature: 0.3,
+              response_format: { type: "json_object" },
+              messages: [
+                {
+                  role:"system",
+                  content:"Tu réponds uniquement avec du JSON valide."
+                },
+                {
+                  role:"user",
+                  content: prompt
+                }
+              ]
+            })
+          });
+
+          if(!res.ok){
+            const errText = await res.text();
+            throw new Error(`Groq HTTP ${res.status} : ${errText}`);
+          }
+
+          const data = await res.json();
+          const content = data?.choices?.[0]?.message?.content || "{}";
+          const parsed = JSON.parse(content);
+
+          elements.infoCities.textContent = Array.isArray(parsed.grandes_villes) && parsed.grandes_villes.length
+            ? parsed.grandes_villes.join(", ")
+            : ((meta.bigCities || []).join(", ") || "—");
+
+          elements.infoPopulation.textContent = `${parsed.population_approx || meta.population || "approximation"} · attractivité ${Math.round((meta.attractivite || 0.5)*100)}/100`;
+          elements.infoNature.textContent = `${parsed.mer || (meta.sea ? "oui" : "non")} · montagne ${parsed.montagne || (meta.mountain ? "oui" : "non")} · ambiance ${parsed.ambiance || "—"}`;
+          elements.infoHousing.textContent = `${parsed.logement || "approximation"} · mobilité ${parsed.mobilite || "approximation"}`;
+
+          elements.infoSummary.innerHTML = `
+            <strong>${code} ${name}</strong><br><br>
+            ${parsed.resume || "Pas de résumé."}
+            ${
+              pred
+                ? `<br><br><span class="muted">Simulation DGFiP :</span> ${pct(pred.proba)} au rang ${pred.ordre}.`
+                : ""
+            }
+          `;
+
+          setStatus(`Groq: enrichissement OK pour ${code} ${name}.`);
+        }catch(err){
+          console.error(err);
+          setStatus(`Groq KO pour ${code} ${name}: ${err.message}`);
+        }
+      }
+
+      async function initMap(){
+        state.map = L.map("map", {
+          zoomControl: true,
+          attributionControl: true
+        }).setView([46.65, 2.3], 6);
+
+        L.tileLayer(
+          "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+          {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+          }
+        ).addTo(state.map);
+
+        setStatus("Chargement du GeoJSON départements...");
+
+        const res = await fetch(GEOJSON_URL);
+        const geojson = await res.json();
+
+        state.geojsonLayer = L.geoJSON(geojson, {
+          style: styleForFeature,
+          onEachFeature: (feature, layer) => {
+            const code = String(feature.properties.code).toUpperCase();
+            const name = feature.properties.nom;
+
+            state.deptLayersByCode[code] = layer;
+
+            layer.on("click", () => {
+              handleDeptClick(code, name);
+            });
+
+            layer.on("mouseover", () => {
+              if(state.selectedDeptCode !== code){
+                layer.setStyle({ weight: 2, color:"#cfe2ff" });
+              }
+            });
+
+            layer.on("mouseout", () => {
+              layer.setStyle(styleForFeature(feature));
+            });
+          }
+        }).addTo(state.map);
+
+        geojson.features.forEach(feature => {
+          const code = String(feature.properties.code).toUpperCase();
+          const coords = getFeatureCenter(feature);
+          if(!coords) return;
+
+          const icon = L.divIcon({
+            className: "deptNumberLabel",
+            html: code,
+            iconSize: [24, 12]
+          });
+
+          const marker = L.marker(coords, {
+            icon,
+            interactive: false,
+            deptCode: code
+          }).addTo(state.map);
+
+          state.deptLabelMarkers.push(marker);
+        });
+
+        state.map.fitBounds(state.geojsonLayer.getBounds(), { padding:[20,20] });
+        updateMapStyling();
+        setStatus("Carte chargée.");
+      }
+
+      function getFeatureCenter(feature){
+        try{
+          const coords = feature.geometry.coordinates;
+
+          let flat = [];
+          function dig(arr){
+            if(typeof arr[0] === "number"){
+              flat.push(arr);
+              return;
+            }
+            arr.forEach(dig);
+          }
+
+          dig(coords);
+          if(!flat.length) return null;
+
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          flat.forEach(([x,y]) => {
+            if(x < minX) minX = x;
+            if(y < minY) minY = y;
+            if(x > maxX) maxX = x;
+            if(y > maxY) maxY = y;
+          });
+
+          return [(minY + maxY) / 2, (minX + maxX) / 2];
+        }catch(e){
+          return null;
+        }
+      }
+
+      function loadExample(){
+        setFormData({
+          listeType: "LC",
+          rang: "",
+          groqModel: "llama-3.3-70b-versatile",
+          groqApiKey: "",
+          totalPostes: "790",
+          prioHandicap: false,
+          prioConjoint: false,
+          csEnfant: false,
+          csSoutien: false,
+          modeLonguenesse: false,
+          pondChoix: "1.2",
+          pondAttrac: "2.2",
+          pondTension: "1.8",
+          souhaits: [
+            "91 Essonne",
+            "16 Charente",
+            "31 Haute-Garonne",
+            "17 Charente-Maritime",
+            "79 Deux-Sèvres",
+            "85 Vendée",
+            "49 Maine-et-Loire",
+            "44 Loire-Atlantique",
+            "37 Indre-et-Loire",
+            "82 Tarn-et-Garonne",
+            "81 Tarn",
+            "65 Hautes-Pyrénées",
+            "09 Ariège",
+            "47 Lot-et-Garonne",
+            "32 Gers",
+            "46 Lot",
+            "24 Dordogne",
+            "33 Gironde",
+            "40 Landes",
+            "64 Pyrénées-Atlantiques",
+            "29 Finistère",
+            "22 Côtes-d'Armor",
+            "56 Morbihan",
+            "35 Ille-et-Vilaine"
+          ].join("\n")
+        });
+        setStatus("Exemple neutre chargé.");
+      }
+
+      function resetUI(){
+        setFormData({
+          listeType:"LC",
+          rang:"",
+          groqModel:"llama-3.3-70b-versatile",
+          groqApiKey:"",
+          totalPostes:"790",
+          prioHandicap:false,
+          prioConjoint:false,
+          csEnfant:false,
+          csSoutien:false,
+          modeLonguenesse:false,
+          pondChoix:"1.2",
+          pondAttrac:"2.2",
+          pondTension:"1.8",
+          souhaits:""
+        });
+
+        state.predictions = [];
+        state.selectedDeptCode = null;
+        state.selectedDeptName = null;
+
+        elements.badges.innerHTML = "";
+        elements.selectedDeptBadge.textContent = "Aucun département";
+        elements.globalDeptBadge.textContent = "-";
+        elements.kpiTop3.textContent = "-";
+        elements.kpiOffice.textContent = "-";
+        elements.kpiRank.textContent = "-";
+        elements.kpiDeptScore.textContent = "-";
+        elements.top3.innerHTML = "";
+        elements.dgfipDeptInfo.textContent = "Rien de sélectionné.";
+        elements.infoCities.textContent = "-";
+        elements.infoPopulation.textContent = "-";
+        elements.infoNature.textContent = "-";
+        elements.infoHousing.textContent = "-";
+        elements.infoSummary.textContent = "Clique un département pour voir le résumé global.";
+        elements.photoGrid.innerHTML = "";
+        drawRadar(null);
+        updateMapStyling();
+        setStatus("Formulaire vidé.");
+      }
+
+      elements.btnCalc.addEventListener("click", buildPredictions);
+      elements.btnExample.addEventListener("click", () => {
+        loadExample();
+        buildPredictions();
+      });
+      elements.btnReset.addEventListener("click", resetUI);
+      elements.btnSave.addEventListener("click", saveLocal);
+
+      window.addEventListener("resize", () => {
+        drawRadar(getPredictionByCode(state.selectedDeptCode));
+      });
+
+      loadLocal();
+      resetUI();
+      loadLocal();
+      initMap().catch(err => {
+        console.error(err);
+        setStatus(`Erreur carte: ${err.message}`);
+      });
+    })();
+  </script>
+</body>
+</html>
