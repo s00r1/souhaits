@@ -2272,12 +2272,24 @@ Ex:
       async function loadWikimediaPhotos(deptName, cityData = []){
         elements.photoGrid.innerHTML = "";
         const cityNames = cityData.slice(0, 3).map(c => c.name);
+        const positiveKeywords = [
+          "paysage","panorama","vue","ville","centre-ville","center","old town",
+          "village","montagne","rivière","lac","plage","côte","port","château",
+          "nature","parc","forêt","vallée","gorge","abbaye","cathédrale"
+        ];
+        const excludedKeywords = [
+          "logo","blason","coat of arms","drapeau","flag","carte","map","locator",
+          "diagram","chart","graph","svg","insigne","emblem","route"
+        ];
         const queries = [
-          `${deptName} département France panorama`,
-          `${deptName} préfecture vue aérienne`,
-          `${deptName} patrimoine`,
+          `${deptName} département France paysage naturel`,
+          `${deptName} département France plus beaux endroits`,
+          `${deptName} département France panorama ville`,
+          `${deptName} préfecture centre historique`,
           ...cityNames.map(c => `${c} France paysage`),
-          ...cityNames.map(c => `${c} centre ville`)
+          ...cityNames.map(c => `${c} France vue panoramique`),
+          ...cityNames.map(c => `${c} France centre historique`),
+          ...cityNames.map(c => `${c} France monument`)
         ];
 
         try{
@@ -2291,12 +2303,16 @@ Ex:
             const pages = json?.query?.pages ? Object.values(json.query.pages) : [];
             for(const p of pages){
               const img = p?.imageinfo?.[0]?.thumburl || p?.imageinfo?.[0]?.url;
+              const title = (p.title || "").replace("File:", "");
+              const lowTitle = title.toLowerCase();
               if(!img || seen.has(img)) continue;
+              if(excludedKeywords.some(keyword => lowTitle.includes(keyword))) continue;
+              if(!positiveKeywords.some(keyword => lowTitle.includes(keyword))) continue;
               seen.add(img);
               cards.push(`
                 <div class="photo">
                   <img src="${img}" alt="${deptName}">
-                  <div class="cap">${(p.title || "").replace("File:","")}</div>
+                  <div class="cap">${title}</div>
                 </div>
               `);
               if(cards.length >= 9) break;
