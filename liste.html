@@ -76,6 +76,47 @@
       font-size:16px;
     }
 
+    .panelHeaderMain{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+
+    .btnFullscreen{
+      width:auto;
+      border-radius:10px;
+      border:1px solid #35518f;
+      background:linear-gradient(180deg,#20335c,#182744);
+      color:#d7e7ff;
+      padding:7px 10px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+
+    .btnFullscreen.active{
+      border-color:#6ef0c2;
+      color:#6ef0c2;
+      box-shadow:0 0 0 1px rgba(110,240,194,.2) inset;
+    }
+
+    .panel:fullscreen,
+    .panel:-webkit-full-screen{
+      width:100vw;
+      height:100vh;
+      max-width:none;
+      max-height:none;
+      border-radius:0;
+      margin:0;
+    }
+
+    .panel:fullscreen .panelBody,
+    .panel:-webkit-full-screen .panelBody{
+      height:calc(100vh - 60px);
+    }
+
     .panelBody{
       padding:14px 16px 16px;
       height:calc(100% - 52px);
@@ -602,7 +643,10 @@
       <!-- PARTIE 1 -->
       <section class="panel leftPanel">
         <div class="panelHeader">
-          <h2>1. Saisie & réglages</h2>
+          <div class="panelHeaderMain">
+            <h2>1. Saisie & réglages</h2>
+            <button class="btnFullscreen" type="button" data-fullscreen-target="leftPanel">Fullscreen</button>
+          </div>
           <span class="badge">Local only</span>
         </div>
         <div class="panelBody">
@@ -691,7 +735,7 @@ Ex:
           </div>
 
           <div class="status" id="statusBox">
-            V5 : le moteur tape plus fort sur les départements très demandés et sur les premiers vœux trop ambitieux pour un rang LC fragile.
+            V6 : moteur patché avec flux départementaux codés en dur (postes/demandes + tendances) et pénalité d'ambition renforcée pour les vœux très tendus.
           </div>
         </div>
       </section>
@@ -699,7 +743,10 @@ Ex:
       <!-- PARTIE 2 -->
       <section class="panel mapPanel">
         <div class="panelHeader">
-          <h2>2. Carte France / départements</h2>
+          <div class="panelHeaderMain">
+            <h2>2. Carte France / départements</h2>
+            <button class="btnFullscreen" type="button" data-fullscreen-target="mapPanel">Fullscreen</button>
+          </div>
           <div class="mapControls">
             <button id="btnHeatmap" class="ghost" type="button">Heatmap / Carte probabilités : ON</button>
             <div class="legend">
@@ -722,7 +769,10 @@ Ex:
       <!-- PARTIE 3 -->
       <section class="panel dgfipPanel">
         <div class="panelHeader">
-          <h2>3. Infos DGFiP / prédiction</h2>
+          <div class="panelHeaderMain">
+            <h2>3. Infos DGFiP / prédiction</h2>
+            <button class="btnFullscreen" type="button" data-fullscreen-target="dgfipPanel">Fullscreen</button>
+          </div>
           <span class="badge" id="selectedDeptBadge">Aucun département</span>
         </div>
         <div class="panelBody">
@@ -764,7 +814,10 @@ Ex:
       <!-- PARTIE 4 -->
       <section class="panel infoPanel">
         <div class="panelHeader">
-          <h2>4. Infos globales du département</h2>
+          <div class="panelHeaderMain">
+            <h2>4. Infos globales du département</h2>
+            <button class="btnFullscreen" type="button" data-fullscreen-target="infoPanel">Fullscreen</button>
+          </div>
           <span class="badge" id="globalDeptBadge">-</span>
         </div>
         <div class="panelBody">
@@ -831,6 +884,7 @@ Ex:
       const GEOJSON_URL = "https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/departements-100m.geojson";
 
       const elements = {
+        fullscreenButtons: Array.from(document.querySelectorAll(".btnFullscreen")),
         listeType: document.getElementById("listeType"),
         rang: document.getElementById("rang"),
         groqModel: document.getElementById("groqModel"),
@@ -1086,6 +1140,109 @@ Ex:
         "976": { nom:"Mayotte", attractivite:0.32, tension:0.90, sea:true, mountain:false, housing:"€€", bigCities:["Mamoudzou"], population:"~320k", quality:0.42 }
       };
 
+      const DEPT_FLOW_STATS = {
+        "01": { postesMoyens:35, tendancePostes:1, demandesMoyennes:132, tendanceDemandes:1 },
+        "02": { postesMoyens:39, tendancePostes:2, demandesMoyennes:103, tendanceDemandes:-2 },
+        "03": { postesMoyens:35, tendancePostes:2, demandesMoyennes:103, tendanceDemandes:-1 },
+        "04": { postesMoyens:27, tendancePostes:0, demandesMoyennes:123, tendanceDemandes:1 },
+        "05": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:136, tendanceDemandes:2 },
+        "06": { postesMoyens:31, tendancePostes:-2, demandesMoyennes:201, tendanceDemandes:2 },
+        "07": { postesMoyens:28, tendancePostes:-1, demandesMoyennes:134, tendanceDemandes:2 },
+        "08": { postesMoyens:37, tendancePostes:2, demandesMoyennes:88, tendanceDemandes:-2 },
+        "09": { postesMoyens:25, tendancePostes:-1, demandesMoyennes:131, tendanceDemandes:2 },
+        "10": { postesMoyens:35, tendancePostes:2, demandesMoyennes:99, tendanceDemandes:-1 },
+        "11": { postesMoyens:29, tendancePostes:-1, demandesMoyennes:141, tendanceDemandes:2 },
+        "12": { postesMoyens:30, tendancePostes:0, demandesMoyennes:123, tendanceDemandes:1 },
+        "13": { postesMoyens:43, tendancePostes:-2, demandesMoyennes:228, tendanceDemandes:2 },
+        "14": { postesMoyens:32, tendancePostes:-1, demandesMoyennes:158, tendanceDemandes:2 },
+        "15": { postesMoyens:35, tendancePostes:2, demandesMoyennes:100, tendanceDemandes:-1 },
+        "16": { postesMoyens:31, tendancePostes:1, demandesMoyennes:122, tendanceDemandes:1 },
+        "17": { postesMoyens:28, tendancePostes:-2, demandesMoyennes:172, tendanceDemandes:2 },
+        "18": { postesMoyens:34, tendancePostes:2, demandesMoyennes:101, tendanceDemandes:-1 },
+        "19": { postesMoyens:31, tendancePostes:1, demandesMoyennes:116, tendanceDemandes:0 },
+        "2A": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:156, tendanceDemandes:2 },
+        "2B": { postesMoyens:24, tendancePostes:-2, demandesMoyennes:153, tendanceDemandes:2 },
+        "21": { postesMoyens:33, tendancePostes:0, demandesMoyennes:130, tendanceDemandes:1 },
+        "22": { postesMoyens:31, tendancePostes:-1, demandesMoyennes:157, tendanceDemandes:2 },
+        "23": { postesMoyens:36, tendancePostes:2, demandesMoyennes:85, tendanceDemandes:-2 },
+        "24": { postesMoyens:29, tendancePostes:-1, demandesMoyennes:139, tendanceDemandes:2 },
+        "25": { postesMoyens:33, tendancePostes:1, demandesMoyennes:133, tendanceDemandes:1 },
+        "26": { postesMoyens:30, tendancePostes:-1, demandesMoyennes:146, tendanceDemandes:2 },
+        "27": { postesMoyens:35, tendancePostes:1, demandesMoyennes:128, tendanceDemandes:0 },
+        "28": { postesMoyens:35, tendancePostes:1, demandesMoyennes:114, tendanceDemandes:0 },
+        "29": { postesMoyens:33, tendancePostes:-1, demandesMoyennes:175, tendanceDemandes:2 },
+        "30": { postesMoyens:32, tendancePostes:-1, demandesMoyennes:156, tendanceDemandes:2 },
+        "31": { postesMoyens:37, tendancePostes:-2, demandesMoyennes:198, tendanceDemandes:2 },
+        "32": { postesMoyens:28, tendancePostes:0, demandesMoyennes:124, tendanceDemandes:2 },
+        "33": { postesMoyens:39, tendancePostes:-2, demandesMoyennes:222, tendanceDemandes:2 },
+        "34": { postesMoyens:35, tendancePostes:-2, demandesMoyennes:200, tendanceDemandes:2 },
+        "35": { postesMoyens:34, tendancePostes:-2, demandesMoyennes:187, tendanceDemandes:2 },
+        "36": { postesMoyens:35, tendancePostes:2, demandesMoyennes:93, tendanceDemandes:-1 },
+        "37": { postesMoyens:31, tendancePostes:-1, demandesMoyennes:150, tendanceDemandes:2 },
+        "38": { postesMoyens:37, tendancePostes:-2, demandesMoyennes:195, tendanceDemandes:2 },
+        "39": { postesMoyens:30, tendancePostes:0, demandesMoyennes:123, tendanceDemandes:1 },
+        "40": { postesMoyens:27, tendancePostes:-2, demandesMoyennes:156, tendanceDemandes:2 },
+        "41": { postesMoyens:32, tendancePostes:1, demandesMoyennes:117, tendanceDemandes:0 },
+        "42": { postesMoyens:36, tendancePostes:1, demandesMoyennes:142, tendanceDemandes:1 },
+        "43": { postesMoyens:32, tendancePostes:1, demandesMoyennes:112, tendanceDemandes:0 },
+        "44": { postesMoyens:37, tendancePostes:-2, demandesMoyennes:208, tendanceDemandes:2 },
+        "45": { postesMoyens:36, tendancePostes:1, demandesMoyennes:133, tendanceDemandes:1 },
+        "46": { postesMoyens:29, tendancePostes:0, demandesMoyennes:118, tendanceDemandes:1 },
+        "47": { postesMoyens:30, tendancePostes:0, demandesMoyennes:125, tendanceDemandes:1 },
+        "48": { postesMoyens:31, tendancePostes:1, demandesMoyennes:110, tendanceDemandes:0 },
+        "49": { postesMoyens:34, tendancePostes:-1, demandesMoyennes:157, tendanceDemandes:2 },
+        "50": { postesMoyens:32, tendancePostes:0, demandesMoyennes:142, tendanceDemandes:2 },
+        "51": { postesMoyens:36, tendancePostes:1, demandesMoyennes:122, tendanceDemandes:0 },
+        "52": { postesMoyens:37, tendancePostes:2, demandesMoyennes:83, tendanceDemandes:-2 },
+        "53": { postesMoyens:33, tendancePostes:1, demandesMoyennes:109, tendanceDemandes:0 },
+        "54": { postesMoyens:36, tendancePostes:1, demandesMoyennes:132, tendanceDemandes:0 },
+        "55": { postesMoyens:37, tendancePostes:2, demandesMoyennes:81, tendanceDemandes:-2 },
+        "56": { postesMoyens:31, tendancePostes:-2, demandesMoyennes:175, tendanceDemandes:2 },
+        "57": { postesMoyens:40, tendancePostes:1, demandesMoyennes:146, tendanceDemandes:0 },
+        "58": { postesMoyens:36, tendancePostes:2, demandesMoyennes:88, tendanceDemandes:-2 },
+        "59": { postesMoyens:54, tendancePostes:0, demandesMoyennes:229, tendanceDemandes:2 },
+        "60": { postesMoyens:37, tendancePostes:1, demandesMoyennes:139, tendanceDemandes:1 },
+        "61": { postesMoyens:35, tendancePostes:2, demandesMoyennes:100, tendanceDemandes:-1 },
+        "62": { postesMoyens:45, tendancePostes:1, demandesMoyennes:173, tendanceDemandes:1 },
+        "63": { postesMoyens:34, tendancePostes:0, demandesMoyennes:148, tendanceDemandes:1 },
+        "64": { postesMoyens:29, tendancePostes:-2, demandesMoyennes:179, tendanceDemandes:2 },
+        "65": { postesMoyens:27, tendancePostes:-1, demandesMoyennes:138, tendanceDemandes:2 },
+        "66": { postesMoyens:28, tendancePostes:-1, demandesMoyennes:164, tendanceDemandes:2 },
+        "67": { postesMoyens:37, tendancePostes:-1, demandesMoyennes:170, tendanceDemandes:2 },
+        "68": { postesMoyens:34, tendancePostes:0, demandesMoyennes:152, tendanceDemandes:1 },
+        "69": { postesMoyens:42, tendancePostes:-2, demandesMoyennes:217, tendanceDemandes:2 },
+        "70": { postesMoyens:35, tendancePostes:2, demandesMoyennes:94, tendanceDemandes:-1 },
+        "71": { postesMoyens:34, tendancePostes:1, demandesMoyennes:125, tendanceDemandes:0 },
+        "72": { postesMoyens:34, tendancePostes:1, demandesMoyennes:124, tendanceDemandes:0 },
+        "73": { postesMoyens:26, tendancePostes:-2, demandesMoyennes:161, tendanceDemandes:2 },
+        "74": { postesMoyens:28, tendancePostes:-2, demandesMoyennes:187, tendanceDemandes:2 },
+        "75": { postesMoyens:47, tendancePostes:-1, demandesMoyennes:215, tendanceDemandes:2 },
+        "76": { postesMoyens:41, tendancePostes:1, demandesMoyennes:166, tendanceDemandes:1 },
+        "77": { postesMoyens:42, tendancePostes:0, demandesMoyennes:173, tendanceDemandes:1 },
+        "78": { postesMoyens:40, tendancePostes:-1, demandesMoyennes:185, tendanceDemandes:2 },
+        "79": { postesMoyens:32, tendancePostes:1, demandesMoyennes:121, tendanceDemandes:1 },
+        "80": { postesMoyens:38, tendancePostes:2, demandesMoyennes:123, tendanceDemandes:0 },
+        "81": { postesMoyens:30, tendancePostes:0, demandesMoyennes:130, tendanceDemandes:1 },
+        "82": { postesMoyens:29, tendancePostes:0, demandesMoyennes:126, tendanceDemandes:1 },
+        "83": { postesMoyens:32, tendancePostes:-2, demandesMoyennes:195, tendanceDemandes:2 },
+        "84": { postesMoyens:30, tendancePostes:-1, demandesMoyennes:147, tendanceDemandes:2 },
+        "85": { postesMoyens:30, tendancePostes:-2, demandesMoyennes:172, tendanceDemandes:2 },
+        "86": { postesMoyens:33, tendancePostes:1, demandesMoyennes:122, tendanceDemandes:1 },
+        "87": { postesMoyens:33, tendancePostes:1, demandesMoyennes:113, tendanceDemandes:0 },
+        "88": { postesMoyens:36, tendancePostes:2, demandesMoyennes:107, tendanceDemandes:-1 },
+        "89": { postesMoyens:34, tendancePostes:1, demandesMoyennes:108, tendanceDemandes:-1 },
+        "90": { postesMoyens:32, tendancePostes:2, demandesMoyennes:96, tendanceDemandes:-1 },
+        "91": { postesMoyens:39, tendancePostes:-1, demandesMoyennes:180, tendanceDemandes:2 },
+        "92": { postesMoyens:43, tendancePostes:0, demandesMoyennes:189, tendanceDemandes:2 },
+        "93": { postesMoyens:51, tendancePostes:2, demandesMoyennes:164, tendanceDemandes:-1 },
+        "94": { postesMoyens:42, tendancePostes:0, demandesMoyennes:175, tendanceDemandes:1 },
+        "95": { postesMoyens:42, tendancePostes:1, demandesMoyennes:161, tendanceDemandes:1 },
+        "971": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:163, tendanceDemandes:2 },
+        "972": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:160, tendanceDemandes:2 },
+        "973": { postesMoyens:31, tendancePostes:1, demandesMoyennes:121, tendanceDemandes:1 },
+        "974": { postesMoyens:27, tendancePostes:-2, demandesMoyennes:194, tendanceDemandes:2 },
+        "976": { postesMoyens:39, tendancePostes:2, demandesMoyennes:100, tendanceDemandes:-2 },
+      };
       function setStatus(msg){
         elements.statusBox.textContent = msg;
       }
@@ -1204,7 +1361,45 @@ Ex:
         }
 
         updateHeatmapUi();
+      updateFullscreenButtons();
         updateMapStyling();
+      }
+
+
+      function updateFullscreenButtons(){
+        const activePanel = document.fullscreenElement || document.webkitFullscreenElement || null;
+        elements.fullscreenButtons.forEach(btn => {
+          const targetClass = btn.dataset.fullscreenTarget;
+          const panel = targetClass ? document.querySelector(`.${targetClass}`) : null;
+          const isActive = !!panel && panel === activePanel;
+          btn.classList.toggle("active", isActive);
+          btn.textContent = isActive ? "Quitter fullscreen" : "Fullscreen";
+        });
+      }
+
+      async function togglePanelFullscreen(targetClass){
+        const panel = document.querySelector(`.${targetClass}`);
+        if(!panel) return;
+        const active = document.fullscreenElement || document.webkitFullscreenElement;
+
+        try{
+          if(active === panel){
+            if(document.exitFullscreen) await document.exitFullscreen();
+            else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+          } else {
+            if(active && document.exitFullscreen) await document.exitFullscreen();
+            if(panel.requestFullscreen) await panel.requestFullscreen();
+            else if(panel.webkitRequestFullscreen) panel.webkitRequestFullscreen();
+          }
+          if(state.map){
+            setTimeout(() => state.map.invalidateSize(), 120);
+          }
+        }catch(err){
+          console.error(err);
+          setStatus(`Impossible de basculer en fullscreen: ${err.message}`);
+        } finally {
+          updateFullscreenButtons();
+        }
       }
 
       function scoreStr(n){
@@ -1317,7 +1512,44 @@ Ex:
         return clamp(base, 0, 1);
       }
 
-      function capacityIndex(meta){
+      function flowTrendToFactor(t){
+        const trend = Number(t || 0);
+        if(trend >= 2) return 1.22;
+        if(trend >= 1) return 1.10;
+        if(trend <= -2) return 0.80;
+        if(trend <= -1) return 0.90;
+        return 1;
+      }
+
+      function getDeptFlowStats(code){
+        return DEPT_FLOW_STATS[code] || {
+          postesMoyens: 24,
+          tendancePostes: 0,
+          demandesMoyennes: 95,
+          tendanceDemandes: 0
+        };
+      }
+
+      function flowCapacityIndex(code){
+        const st = getDeptFlowStats(code);
+        const base = clamp(st.postesMoyens / 72, 0.08, 1);
+        return clamp(base * flowTrendToFactor(st.tendancePostes), 0.06, 1);
+      }
+
+      function flowDemandIndex(code){
+        const st = getDeptFlowStats(code);
+        const base = clamp(st.demandesMoyennes / 340, 0.08, 1);
+        return clamp(base * flowTrendToFactor(st.tendanceDemandes), 0.06, 1.2);
+      }
+
+      function flowPressureIndex(code){
+        const cap = flowCapacityIndex(code);
+        const dem = flowDemandIndex(code);
+        const raw = dem / Math.max(cap, 0.08);
+        return clamp(raw / 2, 0.22, 1.4);
+      }
+
+      function capacityIndex(meta, code){
         const pop = parsePopulation(meta.population);
         let popScore = 0;
         if(pop >= 1800000) popScore = 1.00;
@@ -1331,40 +1563,44 @@ Ex:
         const cityCountScore = clamp((meta.bigCities?.length || 1) / 4, 0.20, 1);
         const tensionScore = clamp(meta.tension || 0.5, 0, 1);
         const metro = metroScore(meta);
+        const flowCap = flowCapacityIndex(code);
 
         return clamp(
-          (popScore * 0.46) +
-          (cityCountScore * 0.16) +
-          (tensionScore * 0.24) +
-          (metro * 0.14),
+          (popScore * 0.26) +
+          (cityCountScore * 0.10) +
+          (tensionScore * 0.16) +
+          (metro * 0.10) +
+          (flowCap * 0.38),
           0.05,
           1
         );
       }
 
-      function demandIndex(meta){
+      function demandIndex(meta, code){
         const housingScore = housingToScore(meta.housing);
         const metro = metroScore(meta);
         const seaBonus = meta.sea ? 0.10 : 0;
         const mountainBonus = meta.mountain ? 0.08 : 0;
+        const flowDem = flowDemandIndex(code);
 
         return clamp(
-          ((meta.attractivite || 0.5) * 0.40) +
-          ((meta.quality || 0.5) * 0.18) +
-          (housingScore * 0.14) +
-          (metro * 0.12) +
+          ((meta.attractivite || 0.5) * 0.20) +
+          ((meta.quality || 0.5) * 0.10) +
+          (housingScore * 0.08) +
+          (metro * 0.08) +
           seaBonus +
-          mountainBonus,
+          mountainBonus +
+          (flowDem * 0.44),
           0.05,
-          1
+          1.25
         );
       }
 
-      function securityProfile(meta, ordre, totalWishes){
+      function securityProfile(meta, code, ordre, totalWishes){
         if(totalWishes <= 1) return 0;
         const lateRatio = ordre / totalWishes;
-        const lowDemand = 1 - demandIndex(meta);
-        const goodCapacity = capacityIndex(meta);
+        const lowDemand = 1 - demandIndex(meta, code);
+        const goodCapacity = capacityIndex(meta, code);
 
         if(lateRatio < 0.42) return 0;
 
@@ -1388,8 +1624,8 @@ Ex:
       }
 
       function ambitionPenalty(meta, ordre, totalWishes, rankStrength, f){
-        const dem = demandIndex(meta);
-        const cap = capacityIndex(meta);
+        const dem = demandIndex(meta, meta.code);
+        const cap = capacityIndex(meta, meta.code);
         const posRatio = ordre / Math.max(totalWishes, 1);
 
         if(posRatio > 0.45) return 0;
@@ -1525,9 +1761,12 @@ Ex:
         const pondTension = Number(f.pondTension || 1.8);
         const pondChoix = Number(f.pondChoix || 1.2);
 
-        const cap = capacityIndex(meta);
-        const dem = demandIndex(meta);
-        const sec = securityProfile(meta, ordre, totalWishes);
+        const cap = capacityIndex(meta, meta.code);
+        const dem = demandIndex(meta, meta.code);
+        const flowCap = flowCapacityIndex(meta.code);
+        const flowDem = flowDemandIndex(meta.code);
+        const flowPressure = flowPressureIndex(meta.code);
+        const sec = securityProfile(meta, meta.code || "", ordre, totalWishes);
         const orderFactor = wishOrderFactor(ordre, totalWishes, pondChoix);
         const ambition = ambitionPenalty(meta, ordre, totalWishes, rankStrength, f);
 
@@ -1537,15 +1776,19 @@ Ex:
         if(f.csEnfant) priorityBoost += 0.04;
         if(f.csSoutien) priorityBoost += 0.03;
 
-        const weightedDemand = clamp(dem * (0.78 + pondAttrac * 0.18), 0.04, 1.55);
+        const weightedDemand = clamp(dem * flowPressure * (0.72 + pondAttrac * 0.17), 0.04, 1.75);
         const weightedTension = clamp((meta.tension || 0.5) * (0.75 + pondTension * 0.16), 0.04, 1.35);
+        const weightedFlowCap = clamp(flowCap * 1.18, 0.05, 1.18);
+        const weightedFlowDem = clamp(flowDem * 1.24, 0.05, 1.35);
 
         let chance =
           0.004 +
           (rankStrength * 0.37) +
-          (cap * 0.22) +
+          (cap * 0.14) +
+          (weightedFlowCap * 0.18) +
           (weightedTension * 0.10) -
-          (weightedDemand * 0.29) -
+          (weightedDemand * 0.23) -
+          (weightedFlowDem * 0.18) -
           (ambition * 0.34) +
           (sec * 0.18) +
           priorityBoost;
@@ -1565,6 +1808,8 @@ Ex:
           chance *= 1.08;
         }
 
+        if(flowCap > 0.72 && flowDem < 0.55) chance *= 1.10;
+        if(flowCap < 0.38 && flowDem > 0.78) chance *= 0.84;
         if(meta.attractivite < 0.38 && cap > 0.42) chance *= 1.14;
         if(meta.attractivite > 0.88 && ordre <= 20) chance *= 0.84;
         if(meta.tension > 0.80) chance *= 1.03;
@@ -1603,10 +1848,10 @@ Ex:
 
         for(let idx = 0; idx < wishes.length; idx++){
           const w = wishes[idx];
-          const meta = deptDB[w.code] || {
+          const meta = { ...(deptDB[w.code] || {
             nom:w.nom, attractivite:0.50, tension:0.50, quality:0.50, sea:false, mountain:false,
             housing:"€€", bigCities:[w.nom], population:"~300k"
-          };
+          }), code:w.code };
 
           const ordre = idx + 1;
           const conditionalChance = computeConditionalChance({
@@ -1616,9 +1861,9 @@ Ex:
           const assignmentProbability = remaining * conditionalChance;
           remaining *= (1 - conditionalChance);
 
-          const cap = capacityIndex(meta);
-          const dem = demandIndex(meta);
-          const sec = securityProfile(meta, ordre, wishes.length);
+          const cap = capacityIndex(meta, meta.code);
+          const dem = demandIndex(meta, meta.code);
+          const sec = securityProfile(meta, w.code, ordre, wishes.length);
           const ambition = ambitionPenalty(meta, ordre, wishes.length, rankStrength, f);
 
           const score =
@@ -1646,7 +1891,11 @@ Ex:
             capacity: cap,
             demand: dem,
             security: sec,
-            ambition
+            ambition,
+            flowCapacity: flowCapacityIndex(w.code),
+            flowDemand: flowDemandIndex(w.code),
+            flowPressure: flowPressureIndex(w.code),
+            flowStats: getDeptFlowStats(w.code)
           });
         }
 
@@ -1665,7 +1914,7 @@ Ex:
             <div class="pct">${pct(r.proba)}</div>
             <div class="bar"><span style="width:${clamp(r.proba,0,100)}%"></span></div>
             <div class="small muted">
-              vœu n°${r.ordre} · chance cond. ${pct(r.conditionalChance)} · demande ${Math.round(r.demand*100)}/100 · capacité ${Math.round(r.capacity*100)}/100 · ambition ${Math.round(r.ambition*100)}/100
+              vœu n°${r.ordre} · chance cond. ${pct(r.conditionalChance)} · demande ${Math.round(r.demand*100)}/100 · capacité ${Math.round(r.capacity*100)}/100 · pression flux ${Math.round(r.flowPressure*100)}/100 · ambition ${Math.round(r.ambition*100)}/100
             </div>
           </div>
         `).join("");
@@ -1683,7 +1932,7 @@ Ex:
           drawRadar(null);
         }
 
-        setStatus(`Calcul V5 OK. ${wishes.length} vœux analysés. Risque d’office simulé: ${pct(officeRisk)}.`);
+        setStatus(`Calcul V6 OK (flux départementaux intégrés). ${wishes.length} vœux analysés. Risque d’office simulé: ${pct(officeRisk)}.`);
         return results;
       }
 
@@ -1701,7 +1950,7 @@ Ex:
           return;
         }
 
-        const meta = deptDB[code] || {};
+        const meta = { ...(deptDB[code] || {}), code };
         elements.kpiDeptScore.textContent = pred ? scoreStr(pred.score) : "hors liste";
 
         const f = getFormData();
@@ -1717,10 +1966,13 @@ Ex:
         }
 
         txt += `<br><br>`;
-        txt += `Demande estimée <strong>${Math.round((pred?.demand ?? demandIndex(meta)) * 100)}/100</strong>, `;
-        txt += `capacité d’absorption estimée <strong>${Math.round((pred?.capacity ?? capacityIndex(meta)) * 100)}/100</strong>, `;
+        txt += `Demande estimée <strong>${Math.round((pred?.demand ?? demandIndex(meta, code)) * 100)}/100</strong>, `;
+        txt += `capacité d’absorption estimée <strong>${Math.round((pred?.capacity ?? capacityIndex(meta, code)) * 100)}/100</strong>, `;
         txt += `malus d’ambition <strong>${Math.round((pred?.ambition ?? 0) * 100)}/100</strong>, `;
+        const flowStats = pred?.flowStats || getDeptFlowStats(code);
         txt += `tension besoins <strong>${Math.round((meta.tension || 0.5) * 100)}/100</strong>. `;
+        txt += `Flux historiques codés en dur : <strong>${flowStats.postesMoyens}</strong> postes moyens (${flowStats.tendancePostes >= 0 ? "+" : ""}${flowStats.tendancePostes}), `;
+        txt += `<strong>${flowStats.demandesMoyennes}</strong> demandes moyennes (${flowStats.tendanceDemandes >= 0 ? "+" : ""}${flowStats.tendanceDemandes}). `;
 
         if(pred && pred.security > 0.08){
           txt += `Ce vœu joue un rôle de sécurisation. `;
@@ -1900,7 +2152,7 @@ Ex:
         const list = [
           { label:"Accessibilité logement", value: Math.round((1 - housingToScore(meta.housing || "€€")) * 100), unit:"/100", desc:"plus haut = budget plus facile" },
           { label:"Attractivité globale", value: Math.round((meta.attractivite || 0.5) * 100), unit:"/100", desc:"cadre, emploi, dynamisme" },
-          { label:"Capacité d'accueil DGFiP", value: Math.round((pred?.capacity ?? capacityIndex(meta)) * 100), unit:"/100", desc:"estimation locale" },
+          { label:"Capacité d'accueil DGFiP", value: Math.round((pred?.capacity ?? capacityIndex(meta, code)) * 100), unit:"/100", desc:"estimation locale" },
           { label:"Distance médiane mer", value: metrics.seaDistance, unit:" km", desc:"ordre de grandeur" },
           { label:"Distance médiane montagne", value: metrics.mountainDistance, unit:" km", desc:"ordre de grandeur" },
           { label:"Densité estimée", value: metrics.density, unit:" hab/km²", desc:"approximation" },
@@ -1961,7 +2213,7 @@ Ex:
       }
 
       async function updateGlobalInfo(code, name, pred){
-        const meta = deptDB[code] || {};
+        const meta = { ...(deptDB[code] || {}), code };
         const metrics = estimateDepartmentMetrics(meta);
         const cityData = cityProfile(meta);
 
@@ -2193,6 +2445,7 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
           state.heatmapLegendControl.addTo(state.map);
         }
         updateHeatmapUi();
+      updateFullscreenButtons();
 
         setStatus("Chargement du GeoJSON départements...");
 
@@ -2386,6 +2639,10 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
       elements.btnReset.addEventListener("click", resetUI);
       elements.btnSave.addEventListener("click", saveLocal);
       elements.btnHeatmap.addEventListener("click", toggleHeatmap);
+      elements.fullscreenButtons.forEach(btn => {
+        btn.addEventListener("click", () => togglePanelFullscreen(btn.dataset.fullscreenTarget));
+      });
+      document.addEventListener("fullscreenchange", updateFullscreenButtons);
 
       window.addEventListener("resize", () => {
         drawRadar(getPredictionByCode(state.selectedDeptCode));
@@ -2395,6 +2652,7 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
       resetUI();
       loadLocal();
       updateHeatmapUi();
+      updateFullscreenButtons();
       initMap().catch(err => {
         console.error(err);
         setStatus(`Erreur carte: ${err.message}`);
