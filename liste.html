@@ -150,6 +150,76 @@
       max-width: 380px;
     }
 
+    .mapControls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    #btnHeatmap{
+      width:auto;
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid #35518f;
+      background:linear-gradient(180deg,#20335c,#182744);
+      font-size:12px;
+      font-weight:700;
+      color:#d7e7ff;
+    }
+
+    #btnHeatmap.active{
+      border-color:#6ef0c2;
+      color:#6ef0c2;
+      box-shadow:0 0 0 1px rgba(110,240,194,.2) inset;
+    }
+
+    .heatmapLegend{
+      background:rgba(8,13,26,.92);
+      border:1px solid var(--line);
+      border-radius:10px;
+      color:#d6e4ff;
+      padding:10px;
+      width:190px;
+      font-size:12px;
+      line-height:1.35;
+      box-shadow:var(--shadow);
+    }
+
+    .heatmapLegend h4{
+      margin:0 0 8px;
+      font-size:12px;
+      color:#c7d7f7;
+    }
+
+    .heatmapLegend .scale{
+      height:10px;
+      border-radius:999px;
+      margin-bottom:8px;
+      border:1px solid #2b3f70;
+    }
+
+    .heatmapLegend .ticks{
+      display:flex;
+      justify-content:space-between;
+      color:#93a7d0;
+      margin-bottom:8px;
+    }
+
+    .heatmapLegend .missing{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      color:#93a7d0;
+    }
+
+    .heatmapLegend .chip{
+      width:12px;
+      height:12px;
+      border-radius:3px;
+      border:1px solid #31487e;
+      background:#57637d;
+    }
+
     .field{
       margin-bottom:10px;
     }
@@ -655,11 +725,14 @@ Ex:
       <section class="panel mapPanel">
         <div class="panelHeader">
           <h2>2. Carte France / départements</h2>
-          <div class="legend">
-            <span><i class="dot" style="background:#4f6288;"></i> neutre</span>
-            <span><i class="dot" style="background:#2f7f61;"></i> dans tes vœux</span>
-            <span><i class="dot" style="background:#5b8cff;"></i> top 3</span>
-            <span><i class="dot" style="background:#7ef0c7;"></i> sélectionné</span>
+          <div class="mapControls">
+            <button id="btnHeatmap" class="ghost" type="button">Heatmap / Carte probabilités : ON</button>
+            <div class="legend">
+              <span><i class="dot" style="background:#4f6288;"></i> neutre</span>
+              <span><i class="dot" style="background:#2f7f61;"></i> dans tes vœux</span>
+              <span><i class="dot" style="background:#5b8cff;"></i> top 3</span>
+              <span><i class="dot" style="background:#7ef0c7;"></i> sélectionné</span>
+            </div>
           </div>
         </div>
         <div class="mapWrap">
@@ -801,6 +874,7 @@ Ex:
         btnExample: document.getElementById("btnExample"),
         btnReset: document.getElementById("btnReset"),
         btnSave: document.getElementById("btnSave"),
+        btnHeatmap: document.getElementById("btnHeatmap"),
         statusBox: document.getElementById("statusBox"),
         mapOverlay: document.getElementById("mapOverlay"),
         selectedDeptBadge: document.getElementById("selectedDeptBadge"),
@@ -837,8 +911,15 @@ Ex:
         selectedDeptCode: null,
         selectedDeptName: null,
         cityMarker: null,
-        selectedCityName: null
+        selectedCityName: null,
+        heatmapEnabled: true,
+        heatmapLegendControl: null
       };
+
+      const HEATMAP_COLORS = [
+        "#1a6e3a", "#2f8f45", "#46ad52", "#73c95e", "#a6de67",
+        "#f0df67", "#f8c04d", "#f39b3f", "#e66d45", "#cb3e3f", "#8f1f2c"
+      ];
 
       const aliases = {
         "charente maritime":"17",
@@ -1044,6 +1125,49 @@ Ex:
 
       function pct(n){
         return `${n.toFixed(1)}%`;
+      }
+
+      function heatmapColorForProba(proba){
+        const p = clamp(Number(proba) || 0, 0, 100);
+        const idx = Math.round((p / 100) * (HEATMAP_COLORS.length - 1));
+        return HEATMAP_COLORS[idx];
+      }
+
+      function createHeatmapLegend(){
+        const control = L.control({ position: "bottomright" });
+        control.onAdd = () => {
+          const div = L.DomUtil.create("div", "heatmapLegend");
+          const gradient = `linear-gradient(90deg, ${HEATMAP_COLORS.join(",")})`;
+          div.innerHTML = `
+            <h4>Carte probabilités</h4>
+            <div class="scale" style="background:${gradient};"></div>
+            <div class="ticks"><span>0%</span><span>50%</span><span>100%</span></div>
+            <div class="missing"><span class="chip"></span>département non présent</div>
+          `;
+          L.DomEvent.disableClickPropagation(div);
+          return div;
+        };
+        return control;
+      }
+
+      function updateHeatmapUi(){
+        elements.btnHeatmap.classList.toggle("active", state.heatmapEnabled);
+        elements.btnHeatmap.textContent = `Heatmap / Carte probabilités : ${state.heatmapEnabled ? "ON" : "OFF"}`;
+      }
+
+      function toggleHeatmap(){
+        state.heatmapEnabled = !state.heatmapEnabled;
+
+        if(state.map && state.heatmapLegendControl){
+          if(state.heatmapEnabled){
+            state.heatmapLegendControl.addTo(state.map);
+          } else {
+            state.map.removeControl(state.heatmapLegendControl);
+          }
+        }
+
+        updateHeatmapUi();
+        updateMapStyling();
       }
 
       function scoreStr(n){
@@ -1665,29 +1789,36 @@ Ex:
         const pred = getPredictionByCode(code);
         const isSelected = state.selectedDeptCode === code;
 
-        let fill = "#344566";
+        let fill = "#57637d";
         let weight = 1;
         let color = "#6f84b0";
-        let fillOpacity = 0.45;
+        let fillOpacity = 0.48;
 
-        if(pred){
-          fill = "#2f7f61";
-          fillOpacity = clamp(0.25 + pred.proba / 24, 0.28, 0.78);
-          color = "#7dc8ae";
-        }
+        if(state.heatmapEnabled){
+          if(pred){
+            fill = heatmapColorForProba(pred.proba);
+            color = "#d4ddf3";
+            fillOpacity = clamp(0.38 + pred.proba / 180, 0.40, 0.84);
+          }
+        } else {
+          if(pred){
+            fill = "#2f7f61";
+            fillOpacity = clamp(0.25 + pred.proba / 24, 0.28, 0.78);
+            color = "#7dc8ae";
+          }
 
-        const sorted = [...state.predictions].sort((a,b)=>b.proba-a.proba).slice(0,3).map(x=>x.code);
-        if(sorted.includes(code)){
-          fill = "#355fd1";
-          color = "#8cb6ff";
-          fillOpacity = 0.68;
+          const sorted = [...state.predictions].sort((a,b)=>b.proba-a.proba).slice(0,3).map(x=>x.code);
+          if(sorted.includes(code)){
+            fill = "#355fd1";
+            color = "#8cb6ff";
+            fillOpacity = 0.68;
+          }
         }
 
         if(isSelected){
-          fill = "#46cfa2";
           color = "#dffff5";
           weight = 2.2;
-          fillOpacity = 0.85;
+          fillOpacity = clamp(fillOpacity + 0.1, 0.50, 0.90);
         }
 
         return {
@@ -2018,6 +2149,12 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
           }
         ).addTo(state.map);
 
+        state.heatmapLegendControl = createHeatmapLegend();
+        if(state.heatmapEnabled){
+          state.heatmapLegendControl.addTo(state.map);
+        }
+        updateHeatmapUi();
+
         setStatus("Chargement du GeoJSON départements...");
 
         const res = await fetch(GEOJSON_URL);
@@ -2208,6 +2345,7 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
       });
       elements.btnReset.addEventListener("click", resetUI);
       elements.btnSave.addEventListener("click", saveLocal);
+      elements.btnHeatmap.addEventListener("click", toggleHeatmap);
 
       window.addEventListener("resize", () => {
         drawRadar(getPredictionByCode(state.selectedDeptCode));
@@ -2216,6 +2354,7 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
       loadLocal();
       resetUI();
       loadLocal();
+      updateHeatmapUi();
       initMap().catch(err => {
         console.error(err);
         setStatus(`Erreur carte: ${err.message}`);
