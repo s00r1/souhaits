@@ -1615,11 +1615,11 @@ Ex:
 
       function wishOrderFactor(ordre, totalWishes, pondChoix){
         const pos = (ordre - 1) / Math.max(totalWishes - 1, 1);
-        const earlyBoost = 1 - pos;
+        const earlyBoost = Math.pow(1 - pos, 1.35);
         return clamp(
-          1 + ((earlyBoost - 0.5) * pondChoix * 0.10),
-          0.84,
-          1.16
+          1 + ((earlyBoost - 0.5) * pondChoix * 0.34),
+          0.56,
+          1.42
         );
       }
 
@@ -1692,15 +1692,43 @@ Ex:
 
       function parseSouhaits(text){
         const lines = text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
-        const seen = new Set();
         const out = [];
         for(const line of lines){
           const code = findDeptCode(line);
-          if(!code || seen.has(code)) continue;
-          seen.add(code);
+          if(!code) continue;
           out.push({ code, nom: deptDB[code]?.nom || line, raw: line });
         }
         return out;
+      }
+
+      function aggregatePredictionsByDept(results){
+        const byDept = new Map();
+
+        for(const row of results){
+          if(!byDept.has(row.code)){
+            byDept.set(row.code, {
+              ...row,
+              occurrenceCount: 1,
+              occurrenceOrders: [row.ordre]
+            });
+            continue;
+          }
+
+          const agg = byDept.get(row.code);
+          const countBefore = agg.occurrenceCount;
+
+          agg.proba += row.proba;
+          agg.occurrenceCount += 1;
+          agg.occurrenceOrders.push(row.ordre);
+          agg.conditionalChance = Math.max(agg.conditionalChance, row.conditionalChance);
+          agg.remainingAfter = Math.min(agg.remainingAfter, row.remainingAfter);
+          agg.security = Math.max(agg.security, row.security);
+          agg.ambition = Math.min(agg.ambition, row.ambition);
+          agg.score = ((agg.score * countBefore) + row.score) / agg.occurrenceCount;
+          agg.ordre = Math.min(agg.ordre, row.ordre);
+        }
+
+        return Array.from(byDept.values()).sort((a,b) => a.ordre - b.ordre);
       }
 
       function getFormData(){
@@ -1802,11 +1830,15 @@ Ex:
           if(ordre <= 10 && dem > 0.82) chance *= 0.84;
           if(ordre <= 15 && dem > 0.88) chance *= 0.86;
 
-          if(ordre > Math.max(18, Math.floor(totalWishes * 0.55)) && dem < 0.55) chance *= 1.12;
-          if(ordre > Math.max(24, Math.floor(totalWishes * 0.70)) && cap > 0.48 && dem < 0.50) chance *= 1.08;
+          if(ordre > Math.max(18, Math.floor(totalWishes * 0.55)) && dem < 0.55) chance *= 0.94;
+          if(ordre > Math.max(24, Math.floor(totalWishes * 0.70)) && cap > 0.48 && dem < 0.50) chance *= 0.90;
         } else {
           chance *= 1.08;
         }
+
+        const depthRatio = (ordre - 1) / Math.max(totalWishes - 1, 1);
+        const depthPenalty = 1 - (0.34 * Math.pow(depthRatio, 1.1));
+        chance *= clamp(depthPenalty, 0.62, 1);
 
         if(flowCap > 0.72 && flowDem < 0.55) chance *= 1.10;
         if(flowCap < 0.38 && flowDem > 0.78) chance *= 0.84;
@@ -1899,8 +1931,9 @@ Ex:
           });
         }
 
+        const aggregatedResults = aggregatePredictionsByDept(results);
         const officeRisk = clamp(remaining * 100, 0.5, 99.5);
-        const sorted = [...results].sort((a,b) => b.proba - a.proba);
+        const sorted = [...aggregatedResults].sort((a,b) => b.proba - a.proba);
         const top3 = sorted.slice(0,3);
         const chanceTop3 = top3.reduce((a,b)=>a+b.proba,0);
 
@@ -1914,18 +1947,18 @@ Ex:
             <div class="pct">${pct(r.proba)}</div>
             <div class="bar"><span style="width:${clamp(r.proba,0,100)}%"></span></div>
             <div class="small muted">
-              vœu n°${r.ordre} · chance cond. ${pct(r.conditionalChance)} · demande ${Math.round(r.demand*100)}/100 · capacité ${Math.round(r.capacity*100)}/100 · pression flux ${Math.round(r.flowPressure*100)}/100 · ambition ${Math.round(r.ambition*100)}/100
+              vœu n°${r.ordre} · chance cond. ${pct(r.conditionalChance)} · demande ${Math.round(r.demand*100)}/100 · capacité ${Math.round(r.capacity*100)}/100 · pression flux ${Math.round(r.flowPressure*100)}/100 · ambition ${Math.round(r.ambition*100)}/100${r.occurrenceCount > 1 ? ` · ${r.occurrenceCount} occurrences (rangs ${r.occurrenceOrders.join(", ")})` : ""}
             </div>
           </div>
         `).join("");
 
-        state.predictions = results;
-        state.heatmapScale = computeHeatmapScale(results);
+        state.predictions = aggregatedResults;
+        state.heatmapScale = computeHeatmapScale(aggregatedResults);
         refreshHeatmapLegend();
         updateMapStyling();
 
         if(state.selectedDeptCode){
-          const selected = results.find(x => x.code === state.selectedDeptCode);
+          const selected = aggregatedResults.find(x => x.code === state.selectedDeptCode);
           updateDgfipPanelForDept(state.selectedDeptCode, state.selectedDeptName, selected);
           drawRadar(selected);
         } else {
@@ -1933,7 +1966,7 @@ Ex:
         }
 
         setStatus(`Calcul V6 OK (flux départementaux intégrés). ${wishes.length} vœux analysés. Risque d’office simulé: ${pct(officeRisk)}.`);
-        return results;
+        return aggregatedResults;
       }
 
       function getPredictionByCode(code){
