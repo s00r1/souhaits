@@ -2249,7 +2249,8 @@ Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData
           state.deptLabelMarkers.push(marker);
         });
 
-        state.map.fitBounds(state.geojsonLayer.getBounds(), { padding:[20,20] });
+        const franceMetropolitaineBounds = L.latLngBounds([[41.0, -5.8], [51.7, 9.8]]);
+        state.map.fitBounds(franceMetropolitaineBounds, { padding:[20,20] });
         updateMapStyling();
         setStatus("Carte chargée.");
       }
