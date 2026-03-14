@@ -892,8 +892,9 @@ Ex:
         heatmapScale: {
           min: 0,
           max: 100,
-          p10: 0,
-          p90: 100
+          median: 50,
+          total: 0,
+          byCode: {}
         }
       };
 
@@ -1109,50 +1110,43 @@ Ex:
       }
 
       function computeHeatmapScale(predictions){
-        const probs = (predictions || [])
-          .map(p => Number(p?.proba) || 0)
-          .filter(v => Number.isFinite(v))
-          .sort((a,b) => a - b);
+        const sorted = [...(predictions || [])]
+          .filter(p => p && Number.isFinite(Number(p.proba)))
+          .sort((a,b) => (Number(a.proba) - Number(b.proba)) || String(a.code).localeCompare(String(b.code)));
 
-        if(!probs.length){
-          return { min:0, max:100, p10:0, p90:100 };
+        if(!sorted.length){
+          return { min:0, max:100, median:50, total:0, byCode:{} };
         }
 
+        const probs = sorted.map(p => clamp(Number(p.proba) || 0, 0, 100));
         const min = probs[0];
         const max = probs[probs.length - 1];
-        const at = (ratio) => {
-          const idx = clamp(Math.round((probs.length - 1) * ratio), 0, probs.length - 1);
-          return probs[idx];
-        };
+        const median = probs[Math.floor((probs.length - 1) / 2)];
+        const byCode = {};
 
-        let p10 = at(0.10);
-        let p90 = at(0.90);
-
-        if(Math.abs(p90 - p10) < 0.1){
-          const delta = Math.max((max - min) * 0.25, 0.5);
-          p10 = Math.max(min, p10 - delta);
-          p90 = Math.min(max, p90 + delta);
+        if(sorted.length === 1){
+          byCode[sorted[0].code] = 0.5;
+        } else {
+          sorted.forEach((pred, idx) => {
+            byCode[pred.code] = idx / (sorted.length - 1);
+          });
         }
 
-        if(Math.abs(max - min) < 0.1){
-          return {
-            min,
-            max,
-            p10: Math.max(0, min - 0.5),
-            p90: Math.min(100, max + 0.5)
-          };
-        }
-
-        return { min, max, p10, p90 };
+        return { min, max, median, total: sorted.length, byCode };
       }
 
-      function heatmapColorForProba(proba){
-        const p = clamp(Number(proba) || 0, 0, 100);
-        const scale = state.heatmapScale || { p10:0, p90:100 };
-        const spread = Math.max((scale.p90 - scale.p10) || 0, 0.001);
-        const normalized = clamp((p - scale.p10) / spread, 0, 1);
-        const boosted = Math.pow(normalized, 0.85);
-        const idx = Math.round(boosted * (HEATMAP_COLORS.length - 1));
+      function heatmapColorForDept(code, proba){
+        const scale = state.heatmapScale || { byCode:{} };
+        const rankedRatio = scale.byCode?.[code];
+        let normalized = Number.isFinite(rankedRatio) ? rankedRatio : null;
+
+        if(normalized === null){
+          const p = clamp(Number(proba) || 0, 0, 100);
+          const spread = Math.max((scale.max - scale.min) || 0, 0.001);
+          normalized = clamp((p - scale.min) / spread, 0, 1);
+        }
+
+        const idx = Math.round(clamp(normalized, 0, 1) * (HEATMAP_COLORS.length - 1));
         return HEATMAP_COLORS[idx];
       }
 
@@ -1162,14 +1156,14 @@ Ex:
 
       function heatmapLegendMarkup(){
         const gradient = `linear-gradient(90deg, ${HEATMAP_COLORS.join(",")})`;
-        const scale = state.heatmapScale || { p10:0, p90:100, min:0, max:100 };
-        const mid = (scale.p10 + scale.p90) / 2;
+        const scale = state.heatmapScale || { min:0, max:100, median:50, total:0 };
 
         return `
-          <h4>Carte probabilités (échelle relative)</h4>
+          <h4>Carte probabilités (classement relatif)</h4>
           <div class="scale" style="background:${gradient};"></div>
-          <div class="ticks"><span>${formatLegendPct(scale.p10)}</span><span>${formatLegendPct(mid)}</span><span>${formatLegendPct(scale.p90)}</span></div>
-          <div class="small muted">Plage simulée: ${formatLegendPct(scale.min)} → ${formatLegendPct(scale.max)}</div>
+          <div class="ticks"><span>Moins probable</span><span>Médiane</span><span>Plus probable</span></div>
+          <div class="small muted">Proba: ${formatLegendPct(scale.min)} → ${formatLegendPct(scale.max)} (médiane ${formatLegendPct(scale.median)})</div>
+          <div class="small muted">${scale.total || 0} département(s) classé(s) sur la liste</div>
           <div class="missing"><span class="chip"></span>département non présent</div>
         `;
       }
@@ -1841,7 +1835,7 @@ Ex:
 
         if(state.heatmapEnabled){
           if(pred){
-            fill = heatmapColorForProba(pred.proba);
+            fill = heatmapColorForDept(code, pred.proba);
             color = "#d4ddf3";
             fillOpacity = clamp(0.38 + pred.proba / 180, 0.40, 0.84);
           }
