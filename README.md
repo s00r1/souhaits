@@ -1,4 +1,4 @@
-# 🧭 Guide ultra-détaillé (débutant) — DGFIP Predictor Map V5
+# 🧭 Guide — DGFIP Predictor Map 
 
 > Bienvenue 👋 Ce projet est une **page HTML locale** qui aide à simuler des scénarios d'affectation (listes LC/LP), visualiser des tendances par département, et obtenir une aide textuelle enrichie (optionnelle) via **Groq API**.
 
