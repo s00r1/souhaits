@@ -882,6 +882,10 @@ Ex:
     (() => {
       const STORAGE_KEY = "dgfip_predictor_map_v5";
       const GEOJSON_URL = "https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/2025/geojson/departements-100m.geojson";
+      const GEO_API_BASE = "https://geo.api.gouv.fr";
+      const WIKI_API_BASE = "https://fr.wikipedia.org/api/rest_v1/page/summary";
+      const OSRM_API_BASE = "https://router.project-osrm.org/route/v1/driving";
+      const OPEN_METEO_BASE = "https://api.open-meteo.com/v1/forecast";
 
       const elements = {
         fullscreenButtons: Array.from(document.querySelectorAll(".btnFullscreen")),
@@ -949,8 +953,35 @@ Ex:
           median: 50,
           total: 0,
           byCode: {}
-        }
+        },
+        realDataCache: {}
       };
+
+      const SEA_POINTS = [
+        { name:"Dunkerque", lat:51.0344, lng:2.3768 },
+        { name:"Le Havre", lat:49.4944, lng:0.1079 },
+        { name:"Brest", lat:48.3904, lng:-4.4861 },
+        { name:"Lorient", lat:47.7483, lng:-3.3702 },
+        { name:"La Rochelle", lat:46.1603, lng:-1.1511 },
+        { name:"Bordeaux Lacanau", lat:45.0051, lng:-1.2011 },
+        { name:"Biarritz", lat:43.4832, lng:-1.5586 },
+        { name:"Sète", lat:43.4028, lng:3.6928 },
+        { name:"Marseille", lat:43.2965, lng:5.3698 },
+        { name:"Nice", lat:43.7102, lng:7.2620 }
+      ];
+
+      const MOUNTAIN_POINTS = [
+        { name:"Chamonix", lat:45.9237, lng:6.8694 },
+        { name:"Grenoble", lat:45.1885, lng:5.7245 },
+        { name:"Briançon", lat:44.8992, lng:6.6421 },
+        { name:"Luchon", lat:42.7908, lng:0.5947 },
+        { name:"Foix", lat:42.9654, lng:1.6072 },
+        { name:"Aurillac", lat:44.9267, lng:2.4413 },
+        { name:"Le Puy-en-Velay", lat:45.0437, lng:3.8854 },
+        { name:"Gap", lat:44.5596, lng:6.0781 },
+        { name:"Annecy", lat:45.8992, lng:6.1294 },
+        { name:"Saint-Dié-des-Vosges", lat:48.2884, lng:6.9490 }
+      ];
 
       const HEATMAP_COLORS = [
         "#8f1f2c", "#cb3e3f", "#e66d45", "#f39b3f", "#f8c04d",
@@ -1500,6 +1531,133 @@ Ex:
         return Number.isFinite(n) ? n : fallback;
       }
 
+
+      function toKm(distanceMeters){
+        if(!Number.isFinite(distanceMeters)) return null;
+        return Math.round(distanceMeters / 1000);
+      }
+
+      async function fetchJson(url){
+        const res = await fetch(url);
+        if(!res.ok) throw new Error(`HTTP ${res.status} sur ${url}`);
+        return res.json();
+      }
+
+      function formatDeptCodeForApi(code){
+        if(/^\d$/.test(code)) return `0${code}`;
+        return String(code).toUpperCase();
+      }
+
+      async function fetchDepartmentFromApi(code){
+        const c = formatDeptCodeForApi(code);
+        const base = `${GEO_API_BASE}/departements/${encodeURIComponent(c)}`;
+        const [dept, communes] = await Promise.all([
+          fetchJson(`${base}?fields=nom,code,codeRegion,region,centre`).catch(()=>null),
+          fetchJson(`${base}/communes?fields=nom,population,centre&format=json`).catch(()=>[])
+        ]);
+
+        const sortedCommunes = Array.isArray(communes)
+          ? communes
+              .filter(c => c?.nom && Number.isFinite(Number(c?.population)))
+              .sort((a,b) => Number(b.population) - Number(a.population))
+          : [];
+
+        return {
+          dept: dept || null,
+          communes: sortedCommunes
+        };
+      }
+
+      async function fetchWeatherByCoords(lat, lng){
+        const url = `${OPEN_METEO_BASE}?latitude=${lat}&longitude=${lng}&current=temperature_2m,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Europe%2FParis&forecast_days=7`;
+        return fetchJson(url);
+      }
+
+      async function computeRouteDistanceKm(from, to){
+        const coords = `${from.lng},${from.lat};${to.lng},${to.lat}`;
+        const url = `${OSRM_API_BASE}/${coords}?overview=false&alternatives=false&steps=false`;
+        const data = await fetchJson(url);
+        const route = Array.isArray(data?.routes) ? data.routes[0] : null;
+        return toKm(route?.distance);
+      }
+
+      async function minRouteDistanceKm(origin, destinations){
+        let min = null;
+        for(const point of destinations){
+          try{
+            const d = await computeRouteDistanceKm(origin, point);
+            if(Number.isFinite(d) && (min === null || d < min)){
+              min = d;
+            }
+          }catch(_err){ }
+        }
+        return min;
+      }
+
+      async function fetchWikipediaSummary(title){
+        const url = `${WIKI_API_BASE}/${encodeURIComponent(title)}`;
+        return fetchJson(url);
+      }
+
+      function firstValidCoord(...coords){
+        for(const c of coords){
+          if(c && Number.isFinite(Number(c.lat)) && Number.isFinite(Number(c.lng))){
+            return { lat:Number(c.lat), lng:Number(c.lng) };
+          }
+          if(Array.isArray(c?.coordinates) && c.coordinates.length >= 2){
+            const [lng, lat] = c.coordinates;
+            if(Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))){
+              return { lat:Number(lat), lng:Number(lng) };
+            }
+          }
+        }
+        return null;
+      }
+
+      function fallbackCenterFromLayer(code){
+        const layer = state.deptLayersByCode[code];
+        if(!layer) return null;
+        const center = layer.getBounds().getCenter();
+        return { lat:center.lat, lng:center.lng };
+      }
+
+      async function buildRealDepartmentData(code, name){
+        if(state.realDataCache[code]) return state.realDataCache[code];
+
+        const apiData = await fetchDepartmentFromApi(code);
+        const topCommunes = apiData.communes.slice(0, 6);
+        const center = firstValidCoord(apiData.dept?.centre, topCommunes[0]?.centre, fallbackCenterFromLayer(code));
+
+        let seaDistanceKm = null;
+        let mountainDistanceKm = null;
+        let weather = null;
+
+        if(center){
+          seaDistanceKm = await minRouteDistanceKm(center, SEA_POINTS);
+          mountainDistanceKm = await minRouteDistanceKm(center, MOUNTAIN_POINTS);
+          weather = await fetchWeatherByCoords(center.lat, center.lng).catch(() => null);
+        }
+
+        const wikiDept = await fetchWikipediaSummary(`${name} (département)`).catch(async () => {
+          return fetchWikipediaSummary(name).catch(() => null);
+        });
+
+        const real = {
+          name: apiData.dept?.nom || name,
+          code: apiData.dept?.code || code,
+          region: apiData.dept?.region?.nom || null,
+          center,
+          communes: topCommunes,
+          seaDistanceKm,
+          mountainDistanceKm,
+          weather,
+          wikiDept
+        };
+
+        state.realDataCache[code] = real;
+        return real;
+      }
+
       function metroScore(meta){
         const cities = meta.bigCities || [];
         const pop = parsePopulation(meta.population);
@@ -1600,7 +1758,7 @@ Ex:
         if(totalWishes <= 1) return 0;
         const lateRatio = ordre / totalWishes;
         const lowDemand = 1 - demandIndex(meta, code);
-        const goodCapacity = capacityIndex(meta, code);
+        const goodCapacity = capacityIndex(meta, meta.code || "");
 
         if(lateRatio < 0.42) return 0;
 
@@ -2000,7 +2158,7 @@ Ex:
 
         txt += `<br><br>`;
         txt += `Demande estimée <strong>${Math.round((pred?.demand ?? demandIndex(meta, code)) * 100)}/100</strong>, `;
-        txt += `capacité d’absorption estimée <strong>${Math.round((pred?.capacity ?? capacityIndex(meta, code)) * 100)}/100</strong>, `;
+        txt += `capacité d’absorption estimée <strong>${Math.round((pred?.capacity ?? capacityIndex(meta, meta.code || "")) * 100)}/100</strong>, `;
         txt += `malus d’ambition <strong>${Math.round((pred?.ambition ?? 0) * 100)}/100</strong>, `;
         const flowStats = pred?.flowStats || getDeptFlowStats(code);
         txt += `tension besoins <strong>${Math.round((meta.tension || 0.5) * 100)}/100</strong>. `;
@@ -2185,7 +2343,7 @@ Ex:
         const list = [
           { label:"Accessibilité logement", value: Math.round((1 - housingToScore(meta.housing || "€€")) * 100), unit:"/100", desc:"plus haut = budget plus facile" },
           { label:"Attractivité globale", value: Math.round((meta.attractivite || 0.5) * 100), unit:"/100", desc:"cadre, emploi, dynamisme" },
-          { label:"Capacité d'accueil DGFiP", value: Math.round((pred?.capacity ?? capacityIndex(meta, code)) * 100), unit:"/100", desc:"estimation locale" },
+          { label:"Capacité d'accueil DGFiP", value: Math.round((pred?.capacity ?? capacityIndex(meta, meta.code || "")) * 100), unit:"/100", desc:"estimation locale" },
           { label:"Distance médiane mer", value: metrics.seaDistance, unit:" km", desc:"ordre de grandeur" },
           { label:"Distance médiane montagne", value: metrics.mountainDistance, unit:" km", desc:"ordre de grandeur" },
           { label:"Densité estimée", value: metrics.density, unit:" hab/km²", desc:"approximation" },
@@ -2248,25 +2406,55 @@ Ex:
       async function updateGlobalInfo(code, name, pred){
         const meta = { ...(deptDB[code] || {}), code };
         const metrics = estimateDepartmentMetrics(meta);
-        const cityData = cityProfile(meta);
+        const fallbackCities = cityProfile(meta);
+
+        let realData = null;
+        try{
+          setStatus(`Chargement des données API réelles pour ${code} ${name}...`);
+          realData = await buildRealDepartmentData(code, name);
+        }catch(err){
+          console.error(err);
+          setStatus(`API réelle indisponible pour ${code} ${name}: ${err.message}`);
+        }
+
+        const cityData = realData?.communes?.length
+          ? realData.communes.map((c, idx) => ({
+              name: c.nom,
+              estPop: Number(c.population || 0),
+              importance: cityImportance(Number(c.population || 0)),
+              distanceSeaKm: idx === 0 ? safeNum(realData.seaDistanceKm, metrics.seaDistance) : safeNum(realData.seaDistanceKm, metrics.seaDistance) + (idx * 12),
+              distanceMountainKm: idx === 0 ? safeNum(realData.mountainDistanceKm, metrics.mountainDistance) : safeNum(realData.mountainDistanceKm, metrics.mountainDistance) + (idx * 10)
+            }))
+          : fallbackCities;
 
         state.selectedCityName = cityData[0]?.name || null;
 
+        const densityInfo = metrics.density;
+        const displayedRegion = realData?.region ? ` · région ${realData.region}` : "";
         elements.infoCities.textContent = cityData.length
           ? cityData.map(c => `${c.name} (${c.importance})`).join(", ")
           : "—";
-        elements.infoPopulation.textContent = `${meta.population || "—"} · densité ~${metrics.density} hab/km² · attractivité ${Math.round((meta.attractivite || 0.5)*100)}/100`;
-        elements.infoNature.textContent = `Mer à ~${metrics.seaDistance} km · montagne à ~${metrics.mountainDistance} km · qualité ${Math.round((meta.quality || 0.5)*100)}/100`;
+        elements.infoPopulation.textContent = `${meta.population || "—"} · densité ~${densityInfo} hab/km²${displayedRegion}`;
+        elements.infoNature.textContent = `Mer (route) à ~${safeNum(realData?.seaDistanceKm, metrics.seaDistance)} km · montagne (route) à ~${safeNum(realData?.mountainDistanceKm, metrics.mountainDistance)} km · qualité ${Math.round((meta.quality || 0.5)*100)}/100`;
         elements.infoHousing.textContent = `niveau logement ${meta.housing || "—"} · tension ${Math.round((meta.tension || 0.5)*100)}/100`;
         elements.infoRentF2.textContent = `${formatEUR(metrics.rentF2)} / mois`;
         elements.infoHousePrice.textContent = `3p: ${formatEUR(metrics.house3p)} · 4p: ${formatEUR(metrics.house4p)}`;
-        elements.infoClimate.textContent = `Été ${metrics.summer.tempMax}°C max / ${metrics.summer.nights}°C nuit · Hiver ${metrics.winter.tempMin}°C min · pluie ${metrics.winter.rains} mm/mois`;
+
+        const daily = realData?.weather?.daily;
+        if(daily?.temperature_2m_max?.length){
+          const max = Math.round(Math.max(...daily.temperature_2m_max));
+          const min = Math.round(Math.min(...daily.temperature_2m_min));
+          const rain = Math.round((daily.precipitation_sum || []).reduce((a,b)=>a + Number(b || 0),0));
+          elements.infoClimate.textContent = `Météo réelle API (7j): max ${max}°C · min ${min}°C · pluie cumulée ${rain} mm`;
+        }else{
+          elements.infoClimate.textContent = `Été ${metrics.summer.tempMax}°C max / ${metrics.summer.nights}°C nuit · Hiver ${metrics.winter.tempMin}°C min · pluie ${metrics.winter.rains} mm/mois`;
+        }
 
         if(cityData.length){
           elements.cityMeta.textContent = `${cityData[0].name} · ${cityData[0].importance} · mer ${cityData[0].distanceSeaKm} km · montagne ${cityData[0].distanceMountainKm} km`;
           elements.cityHighlight.innerHTML = `
             <h4>Ville mise en évidence : ${cityData[0].name}</h4>
-            <div class="small muted">Population estimée ${cityData[0].estPop.toLocaleString("fr-FR")} hab · Mer à ${cityData[0].distanceSeaKm} km · Montagne à ${cityData[0].distanceMountainKm} km.</div>
+            <div class="small muted">Population ${cityData[0].estPop.toLocaleString("fr-FR")} hab · Mer (route) à ${cityData[0].distanceSeaKm} km · Montagne (route) à ${cityData[0].distanceMountainKm} km.</div>
           `;
           renderCityChips(cityData);
           updateCityMarker(cityData[0]);
@@ -2277,7 +2465,11 @@ Ex:
           updateCityMarker(null);
         }
 
-        const sortedMetrics = buildSortedMetrics(meta, pred, metrics, cityData);
+        const sortedMetrics = buildSortedMetrics(meta, pred, {
+          ...metrics,
+          seaDistance: safeNum(realData?.seaDistanceKm, metrics.seaDistance),
+          mountainDistance: safeNum(realData?.mountainDistanceKm, metrics.mountainDistance)
+        }, cityData);
         elements.infoSortedMetrics.innerHTML = sortedMetrics.map((m) => `
           <li>
             <span><strong>${m.label}</strong><br><span class="muted">${m.desc}</span></span>
@@ -2285,24 +2477,31 @@ Ex:
           </li>
         `).join("");
 
+        const wikiExtract = realData?.wikiDept?.extract ? `<br><br>${realData.wikiDept.extract}` : "";
         elements.infoSummary.innerHTML = `
           <strong>${code} ${name}</strong><br><br>
           Focus pratique: ${cityData.slice(0,3).map(c => c.name).join(", ") || "villes principales non renseignées"}. 
-          Distance moyenne estimée vers la mer: <strong>${metrics.seaDistance} km</strong>. 
-          Distance moyenne estimée vers les zones de montagne: <strong>${metrics.mountainDistance} km</strong>. 
+          Distance routière moyenne vers la mer: <strong>${safeNum(realData?.seaDistanceKm, metrics.seaDistance)} km</strong>. 
+          Distance routière moyenne vers les zones de montagne: <strong>${safeNum(realData?.mountainDistanceKm, metrics.mountainDistance)} km</strong>. 
           Loyer F2 autour de <strong>${formatEUR(metrics.rentF2)}</strong> et maison 3-4 pièces entre <strong>${formatEUR(metrics.house3p)}</strong> et <strong>${formatEUR(metrics.house4p)}</strong>.
+          ${wikiExtract}
           ${
             pred
-              ? ` Dans la simulation V5, il ressort à ${pct(pred.proba)} au vœu n°${pred.ordre}.`
-              : ` Il n'est pas dans ta liste actuelle.`
+              ? ` <br><br>Dans la simulation V5, il ressort à ${pct(pred.proba)} au vœu n°${pred.ordre}.`
+              : ` <br><br>Il n'est pas dans ta liste actuelle.`
           }
         `;
 
-        loadWikimediaPhotos(name, cityData);
-        await enrichWithGroq(code, name, pred, meta, metrics, cityData);
+        await loadWikimediaPhotos(name, cityData, realData);
+        await enrichWithGroq(code, name, pred, meta, {
+          ...metrics,
+          seaDistance: safeNum(realData?.seaDistanceKm, metrics.seaDistance),
+          mountainDistance: safeNum(realData?.mountainDistanceKm, metrics.mountainDistance)
+        }, cityData);
+        setStatus(`Données API chargées pour ${code} ${name}.`);
       }
 
-      async function loadWikimediaPhotos(deptName, cityData = []){
+      async function loadWikimediaPhotos(deptName, cityData = [], realData = null){
         elements.photoGrid.innerHTML = "";
         const cityNames = cityData.slice(0, 3).map(c => c.name);
         const positiveKeywords = [
@@ -2319,6 +2518,8 @@ Ex:
           `${deptName} département France plus beaux endroits`,
           `${deptName} département France panorama ville`,
           `${deptName} préfecture centre historique`,
+          `${deptName} département paysage naturel réel`,
+          ...(realData?.region ? [`${realData.region} ${deptName} paysage`] : []),
           ...cityNames.map(c => `${c} France paysage`),
           ...cityNames.map(c => `${c} France vue panoramique`),
           ...cityNames.map(c => `${c} France centre historique`),
@@ -2399,7 +2600,7 @@ Contraintes :
 - Français
 - Pas de markdown
 - Réponse strictement JSON
-- Distances obligatoirement en kilomètres
+- Distances routières obligatoirement en kilomètres
 - Si incertain, écris approximation cohérente
 `; 
 
@@ -2425,7 +2626,7 @@ Contraintes :
                   role:"user",
                   content: `${prompt}
 
-Contexte local déjà estimé: ${JSON.stringify({meta, metrics, villes: cityData})}`
+Contexte local (API + fallback) : ${JSON.stringify({meta, metrics, villes: cityData})}`
                 }
               ]
             })
