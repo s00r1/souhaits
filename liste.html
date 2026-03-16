@@ -943,6 +943,7 @@ Ex:
         predictions: [],
         selectedDeptCode: null,
         selectedDeptName: null,
+        selectedDeptRequestId: 0,
         cityMarker: null,
         selectedCityName: null,
         heatmapEnabled: true,
@@ -1529,6 +1530,13 @@ Ex:
       function safeNum(v, fallback){
         const n = Number(v);
         return Number.isFinite(n) ? n : fallback;
+      }
+
+      function normalizeSearchText(value){
+        return String(value || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
       }
 
 
@@ -2329,11 +2337,13 @@ Ex:
       function handleDeptClick(code, name){
         state.selectedDeptCode = code;
         state.selectedDeptName = name;
+        state.selectedDeptRequestId += 1;
+        const requestId = state.selectedDeptRequestId;
 
         const pred = getPredictionByCode(code);
         updateDgfipPanelForDept(code, name, pred);
         drawRadar(pred);
-        updateGlobalInfo(code, name, pred);
+        updateGlobalInfo(code, name, pred, requestId);
         updateMapStyling();
 
         elements.mapOverlay.textContent = `${code} ${name} sélectionné. Partie 3 = lecture DGFiP. Partie 4 = profil global + photos.`;
@@ -2403,7 +2413,8 @@ Ex:
         });
       }
 
-      async function updateGlobalInfo(code, name, pred){
+      async function updateGlobalInfo(code, name, pred, requestId){
+        const isObsolete = () => requestId !== state.selectedDeptRequestId || state.selectedDeptCode !== code;
         const meta = { ...(deptDB[code] || {}), code };
         const metrics = estimateDepartmentMetrics(meta);
         const fallbackCities = cityProfile(meta);
@@ -2416,6 +2427,8 @@ Ex:
           console.error(err);
           setStatus(`API réelle indisponible pour ${code} ${name}: ${err.message}`);
         }
+
+        if(isObsolete()) return;
 
         const cityData = realData?.communes?.length
           ? realData.communes.map((c, idx) => ({
@@ -2492,18 +2505,24 @@ Ex:
           }
         `;
 
-        await loadWikimediaPhotos(name, cityData, realData);
+        await loadWikimediaPhotos(name, cityData, realData, code, requestId);
+        if(isObsolete()) return;
         await enrichWithGroq(code, name, pred, meta, {
           ...metrics,
           seaDistance: safeNum(realData?.seaDistanceKm, metrics.seaDistance),
           mountainDistance: safeNum(realData?.mountainDistanceKm, metrics.mountainDistance)
         }, cityData);
+        if(isObsolete()) return;
         setStatus(`Données API chargées pour ${code} ${name}.`);
       }
 
-      async function loadWikimediaPhotos(deptName, cityData = [], realData = null){
+      async function loadWikimediaPhotos(deptName, cityData = [], realData = null, deptCode = "", requestId = 0){
+        const isObsolete = () => requestId && requestId !== state.selectedDeptRequestId;
         elements.photoGrid.innerHTML = "";
         const cityNames = cityData.slice(0, 3).map(c => c.name);
+        const strictTerms = [deptName, ...cityNames, `${deptCode}`]
+          .map(normalizeSearchText)
+          .filter(Boolean);
         const positiveKeywords = [
           "paysage","panorama","vue","ville","centre-ville","center","old town",
           "village","montagne","rivière","lac","plage","côte","port","château",
@@ -2534,14 +2553,17 @@ Ex:
             const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=8&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=1000&format=json&origin=*`;
             const res = await fetch(url);
             const json = await res.json();
+            if(isObsolete()) return;
             const pages = json?.query?.pages ? Object.values(json.query.pages) : [];
             for(const p of pages){
               const img = p?.imageinfo?.[0]?.thumburl || p?.imageinfo?.[0]?.url;
               const title = (p.title || "").replace("File:", "");
               const lowTitle = title.toLowerCase();
+              const normalizedTitle = normalizeSearchText(title);
               if(!img || seen.has(img)) continue;
               if(excludedKeywords.some(keyword => lowTitle.includes(keyword))) continue;
               if(!positiveKeywords.some(keyword => lowTitle.includes(keyword))) continue;
+              if(strictTerms.length && !strictTerms.some(term => normalizedTitle.includes(term))) continue;
               seen.add(img);
               cards.push(`
                 <div class="photo">
@@ -2552,6 +2574,7 @@ Ex:
               if(cards.length >= 9) break;
             }
           }
+          if(isObsolete()) return;
           elements.photoGrid.innerHTML = cards.join("") || `
             <div class="photo">
               <div class="cap" style="padding:16px;">Pas de photo trouvée là tout de suite.</div>
@@ -2559,6 +2582,7 @@ Ex:
           `;
         }catch(err){
           console.error(err);
+          if(isObsolete()) return;
           elements.photoGrid.innerHTML = `
             <div class="photo">
               <div class="cap" style="padding:16px;">Erreur photo Wikimedia.</div>
