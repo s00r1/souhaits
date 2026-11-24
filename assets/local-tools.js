@@ -37,7 +37,7 @@
     if(meta.mountain)strengths.push('Le profil du simulateur identifie des zones de montagne.');
     if((meta.quality||0)>=.7)strengths.push('Le cadre de vie obtient un indice élevé dans le modèle local.');
     if(pred){
-      facts.push(`Vœu n°${pred.ordre} : ${pred.proba.toFixed(1)} % des affectations de ce scénario simulé.`);
+      facts.push(`Département, ${pred.occurrenceCount||1} direction(s) : ${pred.proba.toFixed(1)} % des affectations de ce scénario simulé.`);
       if(pred.demand>=.7)cautions.push('La demande simulée est élevée : comparez aussi des départements moins tendus.');
       if(pred.proba<2)cautions.push('La part de ce vœu est faible dans ce scénario, sans valeur prédictive officielle.');
     }else cautions.push('Ajoutez ce département à vos vœux pour le comparer dans votre scénario.');

@@ -12,7 +12,7 @@
 
 - API géographique de l’État : https://geo.api.gouv.fr/ — communes, populations et centres géographiques.
 - Open-Meteo : https://open-meteo.com/ — prévisions météorologiques ; aucune assimilation à des normales climatiques.
-- Wikipédia FR : https://fr.wikipedia.org/ — résumés via API REST, textes soumis à leurs conditions de réutilisation (CC BY-SA). Le contenu reste distinct de l’analyse IA.
+- Wikipédia FR : https://fr.wikipedia.org/ — résumés via API REST, textes soumis à leurs conditions de réutilisation (CC BY-SA). Le contenu reste distinct des synthèses locales à règles fixes.
 - Wikimedia Commons : https://commons.wikimedia.org/ — chaque photo conserve un lien vers sa fiche indiquant auteur et licence. Les résultats de recherche sont des illustrations, sans vérification éditoriale individuelle.
 
 
@@ -35,3 +35,7 @@ Les surfaces sont approchées par une intégration sphérique sur les contours s
 Reconstruction : placer `departements.json`, `regions.json` et un sous-dossier `communes/{code}.json` dans un répertoire d’entrée, puis lancer `python scripts/build-territories.py --input-dir REPERTOIRE --date AAAA-MM-JJ`. Les fichiers JSON d’entrée sont des réponses brutes aux endpoints ci-dessus.
 
 Les synthèses sont des règles locales appliquées aux données présentes et aux hypothèses du modèle. Aucun service d’IA n’est utilisé. Les compléments publics et le fond OpenStreetMap sont désactivés par défaut et ne sont pas stockés dans le cache hors connexion.
+
+## Historique de première affectation C (V10)
+
+Le registre `data/history-reviewed.json` répertorie chaque source avec URL, périmètre et limites. Il comprend les bilans CFDT 2023–2026, le tableau DGFiP des effectifs C 2023 publié par FO (127 directions, totaux contrôlés), cinq comptes rendus locaux d’arrivées et le guide CGT des premières affectations C 2026. Voir [METHODOLOGY.md](./METHODOLOGY.md). Aucun taux de réussite au concours ni chiffre de mutation des titulaires n’est assimilé à une probabilité de première affectation.

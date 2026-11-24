@@ -42,3 +42,18 @@ test('clic sur la carte sans aucun vœu : fiche complète et photos automatiques
  await page.goto('/');await expect(page.locator('#souhaits')).toHaveValue('');await page.locator('#deptSearch').fill('44');await page.locator('#btnOpenDept').click();
  await expect(page.locator('#infoCities')).toContainText('Nantes');await expect(page.locator('#localAdvice .adviceCard')).toHaveCount(3);await expect(page.locator('#photoGrid img')).toHaveCount(6);await expect(page.locator('#photoGrid')).toContainText('CC BY-SA');await expect(page.locator('#kpiTop3')).toContainText('—');await expect(page.locator('#groqSettings')).toHaveCount(0);
 });
+test('deux directions dans le 44 : ordre indépendant, retrait ciblé et parts cumulées sur la carte',async({page})=>{
+ await page.goto('/');await page.locator('#autoPhotos').uncheck();await page.locator('#rang').fill('317');await page.locator('#souhaits').fill('44 DDFiP\n44 DiSI Centre-Ouest\n33 SDNC');await page.locator('#btnCalc').click();
+ await expect(page.locator('#allResults tbody tr')).toHaveCount(3);await expect(page.locator('#wishCount')).toContainText('3 vœux · 2 départements');
+ await page.locator('#deptSearch').fill('44');await page.locator('#btnOpenDept').click();await expect(page.locator('#dgfipDeptInfo')).toContainText('2 direction(s)');
+ await page.locator('.resultsDetails > summary').click();await page.locator('[data-key="D44@44"][data-move="-1"]').click();await expect(page.locator('#souhaits')).toHaveValue('44 DiSI Centre-Ouest\n44 DDFiP\n33 SDNC');
+ await page.locator('#directionChoice').fill('D44 DiSI Centre-Ouest');await page.locator('#btnToggleWish').click();await expect(page.locator('#souhaits')).toHaveValue('44 DDFiP\n33 SDNC');await expect(page.locator('#allResults tbody tr')).toHaveCount(2);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+});
+test('import CSV local : fermeture connue d’une direction et conservation de l’autre dans le même département',async({page})=>{
+ await page.goto('/');await page.locator('#autoPhotos').uncheck();await page.locator('#rang').fill('317');await page.locator('#souhaits').fill('44 DDFiP\n44 DiSI Centre-Ouest');
+ const csv='year,direction,department,offers,requests,assigned,lastRank,source,scope\n2027,440,44,0,,,,https://example.org/test,C_first_admin_national';
+ await page.locator('#historyCSV').setInputFiles({name:'observations.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});await expect(page.locator('#historyImportStatus')).toContainText('1 observation');await page.locator('#btnCalc').click();
+ await expect(page.locator('#allResults tbody tr')).toHaveCount(2);await expect(page.locator('#allResults tbody tr').first()).toContainText('Aucun poste');await expect(page.locator('#allResults tbody tr').first().locator('td').nth(2)).toContainText('0.0%');
+ await page.reload();await expect(page.locator('#historyImportStatus')).toContainText('1 observation');
+});

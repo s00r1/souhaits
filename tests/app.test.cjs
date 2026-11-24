@@ -16,7 +16,7 @@ function boot({saved,fetchImpl,noLeaflet=false,blockedStorage=false,theme,system
  w.fetch=(...args)=>{calls.push(args);return fetchImpl?fetchImpl(...args):Promise.reject(new TypeError('offline'));};
  if(saved)w.localStorage.setItem(storageKey,JSON.stringify(saved));if(theme)w.localStorage.setItem('souhaits_theme_v1',theme);
  if(blockedStorage)Object.defineProperty(w,'localStorage',{get(){throw new Error('blocked');}});
- for(const file of ['assets/theme.js','assets/vendor/leaflet/leaflet.js','assets/departements.js','assets/territoires.js','assets/local-tools.js','assets/photos.js','assets/app.js']){
+ for(const file of ['assets/theme.js','assets/vendor/leaflet/leaflet.js','assets/departements.js','assets/territoires.js','assets/local-tools.js','assets/photos.js','assets/history.js','assets/direction-catalog.js','assets/directions.js','assets/prediction.js','assets/app.js']){
   if(noLeaflet&&file.includes('leaflet.js'))continue;w.eval(fs.readFileSync(path.join(root,file),'utf8'));
  }
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
@@ -27,7 +27,7 @@ function boot({saved,fetchImpl,noLeaflet=false,blockedStorage=false,theme,system
 test('les 101 fiches et marqueurs réels, la carte et les calculs sont utilisables sans aucun appel API',()=>{
  const app=boot();try{
   assert.match(app.el('mapStatus').textContent,/101 départements/);assert.equal(app.w.document.querySelectorAll('.deptNumberLabel').length,101);
-  app.click('btnExample');assert.match(app.el('statusBox').textContent,/24 départements analysés/);assert.equal(app.el('allResults').querySelectorAll('tbody tr').length,24);
+  app.click('btnExample');assert.match(app.el('statusBox').textContent,/25 vœux de direction, 24 départements/);assert.equal(app.el('allResults').querySelectorAll('tbody tr').length,25);
   for(const code of Object.keys(app.w.SOUHAITS_TERRITORIES.departments)){
    app.el('deptSearch').value=code;app.click('btnOpenDept');assert.ok(app.el('cityChips').children.length>0,code);assert.equal(app.el('localAdvice').children.length,3,code);assert.match(app.el('infoSources').textContent,/2026-11-24/);assert.doesNotMatch(app.el('infoPopulation').textContent,/indisponible/);
   }
@@ -40,15 +40,15 @@ test('validation, doublons, somme des parts et invalidation des résultats quand
   const rows=[...app.el('allResults').querySelectorAll('tbody tr')];assert.equal(rows.length,5);assert.match(rows[0].textContent,/47/);assert.match(app.el('statusBox').textContent,/Inconnu/);assert.match(app.el('statusBox').textContent,/double/);
   const total=rows.reduce((sum,row)=>sum+parseFloat(row.cells[2].textContent),0)+parseFloat(app.el('kpiOffice').textContent);assert.ok(Math.abs(total-100)<.5);
   app.el('rang').value='400';app.el('rang').dispatchEvent(new app.w.Event('input'));assert.equal(app.el('allResults').children.length,0);assert.match(app.el('scenarioSummary').textContent,/après le calcul/);
-  app.el('rang').value='-1';app.click('btnCalc');assert.match(app.el('statusBox').textContent,/positif/);
+  app.el('rang').value='-1';app.click('btnCalc');assert.match(app.el('statusBox').textContent,/positifs/);
  }finally{app.close();}
 });
 test('migration des anciens projets : conservation des vœux et suppression de toutes les clés sauvegardées',()=>{
  const app=boot({saved:{rang:'12',pondChoix:'0',souhaits:'44',groqApiKey:'legacy-secret',groqModel:'legacy-model',rememberGroqKey:true},theme:'dark'});try{
-  assert.equal(app.el('pondChoix').value,'0');assert.equal(app.el('souhaits').value,'44');
+  assert.equal(app.el('totalPostes').value,'1152');assert.equal(app.el('souhaits').value,'44');
   const saved=JSON.parse(app.w.localStorage.getItem(storageKey));assert.equal(saved.groqApiKey,undefined);assert.equal(saved.groqModel,undefined);assert.equal(saved.rememberGroqKey,undefined);
   app.click('btnSave');assert.doesNotMatch(app.w.localStorage.getItem(storageKey),/legacy-secret/);
-  app.click('btnReset');assert.equal(app.w.localStorage.getItem(storageKey),null);assert.equal(app.w.localStorage.getItem('souhaits_theme_v1'),'dark');assert.equal(app.el('wishCount').textContent,'0 département');assert.equal(app.el('btnToggleWish').disabled,true);
+  app.click('btnReset');assert.equal(app.w.localStorage.getItem(storageKey),null);assert.equal(app.w.localStorage.getItem('souhaits_theme_v1'),'dark');assert.equal(app.el('wishCount').textContent,'0 vœu · 0 département');assert.equal(app.el('btnToggleWish').disabled,true);
  }finally{app.close();}
 });
 test('génération réglable : 101 départements uniques, filtres, limite outre-mer et conservation du profil',()=>{
@@ -82,5 +82,17 @@ test('les compléments externes sont opt-in et une réponse tardive ne remplace 
   app.el('onlineData').checked=false;app.change('onlineData');
   for(const request of pending)request.resolve(reply(request.url.includes('wikipedia')?{title:'Bad',extract:'STALE TEXT'}:{}));
   await delay(20);assert.doesNotMatch(app.el('infoSummary').textContent,/STALE TEXT/);assert.match(app.el('infoCities').textContent,/Nantes/);assert.equal(app.el('photoGrid').children.length,0);
+ }finally{app.close();}
+});
+
+test('même département : directions distinctes, retrait ciblé, réorganisation et agrégation sur la carte',()=>{
+ const app=boot();try{
+  app.el('rang').value='317';app.el('souhaits').value='44 DDFiP\n44 DiSI Centre-Ouest\n33 SDNC\n44 D44';app.click('btnCalc');
+  let rows=[...app.el('allResults').querySelectorAll('tbody tr')];assert.equal(rows.length,3);assert.match(app.el('wishCount').textContent,/3 vœux · 2 départements/);assert.match(rows[1].textContent,/DiSI/);
+  app.el('deptSearch').value='44';app.click('btnOpenDept');const total=rows.slice(0,2).reduce((sum,row)=>sum+parseFloat(row.cells[2].textContent),0);assert.ok(Math.abs(parseFloat(app.el('kpiDeptScore').textContent)-total)<.15);
+  app.el('allResults').querySelector('[data-key="D44@44"][data-move="-1"]').click();assert.equal(app.el('souhaits').value.split('\n')[0],'44 DiSI Centre-Ouest');
+  app.el('directionChoice').value='D44 DiSI Centre-Ouest';app.el('directionChoice').dispatchEvent(new app.w.Event('input'));app.click('btnToggleWish');
+  rows=[...app.el('allResults').querySelectorAll('tbody tr')];assert.equal(rows.length,2);assert.match(rows[0].textContent,/DR\/DDFiP/);assert.ok(rows.every(row=>!row.textContent.includes('DiSI')));
+  assert.equal(app.errors.length,0);
  }finally{app.close();}
 });

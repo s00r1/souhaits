@@ -1,6 +1,6 @@
 /* Cache only our application assets. Third-party services/tiles are never preloaded. */
-const CACHE='souhaits-v9.0.1';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./assets/icon.svg','./assets/theme.js?v=9.0.1','./assets/app.css?v=9.0.1','./assets/app.js?v=9.0.1','./assets/territoires.js?v=9.0.1','./assets/local-tools.js?v=9.0.1','./assets/photos.js?v=9.0.1','./assets/departements.js','./assets/vendor/leaflet/leaflet.js','./assets/vendor/leaflet/leaflet.css'];
+const CACHE='souhaits-v10.0.0';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./assets/icon.svg','./assets/theme.js?v=10.0.0','./assets/app.css?v=10.0.0','./assets/app.js?v=10.0.0','./assets/territoires.js?v=10.0.0','./assets/local-tools.js?v=10.0.0','./assets/photos.js?v=10.0.0','./assets/history.js?v=10.0.0','./assets/direction-catalog.js?v=10.0.0','./assets/directions.js?v=10.0.0','./assets/prediction.js?v=10.0.0','./assets/departements.js','./assets/vendor/leaflet/leaflet.js','./assets/vendor/leaflet/leaflet.css'];
 const ALLOWED=new Set(ASSETS.map(path=>new URL(path,self.registration.scope).href));
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('souhaits-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});

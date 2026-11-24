@@ -28,9 +28,8 @@
         csEnfant: document.getElementById("csEnfant"),
         csSoutien: document.getElementById("csSoutien"),
         modeLonguenesse: document.getElementById("modeLonguenesse"),
-        pondChoix: document.getElementById("pondChoix"),
-        pondAttrac: document.getElementById("pondAttrac"),
-        pondTension: document.getElementById("pondTension"),
+        campaign:document.getElementById('campaign'),rankMode:document.getElementById('rankMode'),mainSize:document.getElementById('mainSize'),internalSize:document.getElementById('internalSize'),priorityDept:document.getElementById('priorityDept'),
+        directionChoice:document.getElementById('directionChoice'),directionOptions:document.getElementById('directionOptions'),testSpecialized:document.getElementById('testSpecialized'),
         souhaits: document.getElementById("souhaits"),
         btnCalc: document.getElementById("btnCalc"),
         btnExample: document.getElementById("btnExample"),
@@ -71,7 +70,7 @@
         geojsonLayer: null,
         deptLabelMarkers: [],
         deptLayersByCode: {},
-        predictions: [],
+        predictions: [], departmentPredictions:[], simulation:null, importedHistory:[],
         selectedDeptCode: null,
         selectedDeptName: null,
         selectedDeptRequestId: 0,
@@ -277,109 +276,7 @@
         "976": { nom:"Mayotte", attractivite:0.32, tension:0.90, sea:true, mountain:false, housing:"€€", bigCities:["Mamoudzou"], population:"~320k", quality:0.42 }
       };
 
-      const DEPT_FLOW_STATS = {
-        "01": { postesMoyens:35, tendancePostes:1, demandesMoyennes:132, tendanceDemandes:1 },
-        "02": { postesMoyens:39, tendancePostes:2, demandesMoyennes:103, tendanceDemandes:-2 },
-        "03": { postesMoyens:35, tendancePostes:2, demandesMoyennes:103, tendanceDemandes:-1 },
-        "04": { postesMoyens:27, tendancePostes:0, demandesMoyennes:123, tendanceDemandes:1 },
-        "05": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:136, tendanceDemandes:2 },
-        "06": { postesMoyens:31, tendancePostes:-2, demandesMoyennes:201, tendanceDemandes:2 },
-        "07": { postesMoyens:28, tendancePostes:-1, demandesMoyennes:134, tendanceDemandes:2 },
-        "08": { postesMoyens:37, tendancePostes:2, demandesMoyennes:88, tendanceDemandes:-2 },
-        "09": { postesMoyens:25, tendancePostes:-1, demandesMoyennes:131, tendanceDemandes:2 },
-        "10": { postesMoyens:35, tendancePostes:2, demandesMoyennes:99, tendanceDemandes:-1 },
-        "11": { postesMoyens:29, tendancePostes:-1, demandesMoyennes:141, tendanceDemandes:2 },
-        "12": { postesMoyens:30, tendancePostes:0, demandesMoyennes:123, tendanceDemandes:1 },
-        "13": { postesMoyens:43, tendancePostes:-2, demandesMoyennes:228, tendanceDemandes:2 },
-        "14": { postesMoyens:32, tendancePostes:-1, demandesMoyennes:158, tendanceDemandes:2 },
-        "15": { postesMoyens:35, tendancePostes:2, demandesMoyennes:100, tendanceDemandes:-1 },
-        "16": { postesMoyens:31, tendancePostes:1, demandesMoyennes:122, tendanceDemandes:1 },
-        "17": { postesMoyens:28, tendancePostes:-2, demandesMoyennes:172, tendanceDemandes:2 },
-        "18": { postesMoyens:34, tendancePostes:2, demandesMoyennes:101, tendanceDemandes:-1 },
-        "19": { postesMoyens:31, tendancePostes:1, demandesMoyennes:116, tendanceDemandes:0 },
-        "2A": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:156, tendanceDemandes:2 },
-        "2B": { postesMoyens:24, tendancePostes:-2, demandesMoyennes:153, tendanceDemandes:2 },
-        "21": { postesMoyens:33, tendancePostes:0, demandesMoyennes:130, tendanceDemandes:1 },
-        "22": { postesMoyens:31, tendancePostes:-1, demandesMoyennes:157, tendanceDemandes:2 },
-        "23": { postesMoyens:36, tendancePostes:2, demandesMoyennes:85, tendanceDemandes:-2 },
-        "24": { postesMoyens:29, tendancePostes:-1, demandesMoyennes:139, tendanceDemandes:2 },
-        "25": { postesMoyens:33, tendancePostes:1, demandesMoyennes:133, tendanceDemandes:1 },
-        "26": { postesMoyens:30, tendancePostes:-1, demandesMoyennes:146, tendanceDemandes:2 },
-        "27": { postesMoyens:35, tendancePostes:1, demandesMoyennes:128, tendanceDemandes:0 },
-        "28": { postesMoyens:35, tendancePostes:1, demandesMoyennes:114, tendanceDemandes:0 },
-        "29": { postesMoyens:33, tendancePostes:-1, demandesMoyennes:175, tendanceDemandes:2 },
-        "30": { postesMoyens:32, tendancePostes:-1, demandesMoyennes:156, tendanceDemandes:2 },
-        "31": { postesMoyens:37, tendancePostes:-2, demandesMoyennes:198, tendanceDemandes:2 },
-        "32": { postesMoyens:28, tendancePostes:0, demandesMoyennes:124, tendanceDemandes:2 },
-        "33": { postesMoyens:39, tendancePostes:-2, demandesMoyennes:222, tendanceDemandes:2 },
-        "34": { postesMoyens:35, tendancePostes:-2, demandesMoyennes:200, tendanceDemandes:2 },
-        "35": { postesMoyens:34, tendancePostes:-2, demandesMoyennes:187, tendanceDemandes:2 },
-        "36": { postesMoyens:35, tendancePostes:2, demandesMoyennes:93, tendanceDemandes:-1 },
-        "37": { postesMoyens:31, tendancePostes:-1, demandesMoyennes:150, tendanceDemandes:2 },
-        "38": { postesMoyens:37, tendancePostes:-2, demandesMoyennes:195, tendanceDemandes:2 },
-        "39": { postesMoyens:30, tendancePostes:0, demandesMoyennes:123, tendanceDemandes:1 },
-        "40": { postesMoyens:27, tendancePostes:-2, demandesMoyennes:156, tendanceDemandes:2 },
-        "41": { postesMoyens:32, tendancePostes:1, demandesMoyennes:117, tendanceDemandes:0 },
-        "42": { postesMoyens:36, tendancePostes:1, demandesMoyennes:142, tendanceDemandes:1 },
-        "43": { postesMoyens:32, tendancePostes:1, demandesMoyennes:112, tendanceDemandes:0 },
-        "44": { postesMoyens:37, tendancePostes:-2, demandesMoyennes:208, tendanceDemandes:2 },
-        "45": { postesMoyens:36, tendancePostes:1, demandesMoyennes:133, tendanceDemandes:1 },
-        "46": { postesMoyens:29, tendancePostes:0, demandesMoyennes:118, tendanceDemandes:1 },
-        "47": { postesMoyens:30, tendancePostes:0, demandesMoyennes:125, tendanceDemandes:1 },
-        "48": { postesMoyens:31, tendancePostes:1, demandesMoyennes:110, tendanceDemandes:0 },
-        "49": { postesMoyens:34, tendancePostes:-1, demandesMoyennes:157, tendanceDemandes:2 },
-        "50": { postesMoyens:32, tendancePostes:0, demandesMoyennes:142, tendanceDemandes:2 },
-        "51": { postesMoyens:36, tendancePostes:1, demandesMoyennes:122, tendanceDemandes:0 },
-        "52": { postesMoyens:37, tendancePostes:2, demandesMoyennes:83, tendanceDemandes:-2 },
-        "53": { postesMoyens:33, tendancePostes:1, demandesMoyennes:109, tendanceDemandes:0 },
-        "54": { postesMoyens:36, tendancePostes:1, demandesMoyennes:132, tendanceDemandes:0 },
-        "55": { postesMoyens:37, tendancePostes:2, demandesMoyennes:81, tendanceDemandes:-2 },
-        "56": { postesMoyens:31, tendancePostes:-2, demandesMoyennes:175, tendanceDemandes:2 },
-        "57": { postesMoyens:40, tendancePostes:1, demandesMoyennes:146, tendanceDemandes:0 },
-        "58": { postesMoyens:36, tendancePostes:2, demandesMoyennes:88, tendanceDemandes:-2 },
-        "59": { postesMoyens:54, tendancePostes:0, demandesMoyennes:229, tendanceDemandes:2 },
-        "60": { postesMoyens:37, tendancePostes:1, demandesMoyennes:139, tendanceDemandes:1 },
-        "61": { postesMoyens:35, tendancePostes:2, demandesMoyennes:100, tendanceDemandes:-1 },
-        "62": { postesMoyens:45, tendancePostes:1, demandesMoyennes:173, tendanceDemandes:1 },
-        "63": { postesMoyens:34, tendancePostes:0, demandesMoyennes:148, tendanceDemandes:1 },
-        "64": { postesMoyens:29, tendancePostes:-2, demandesMoyennes:179, tendanceDemandes:2 },
-        "65": { postesMoyens:27, tendancePostes:-1, demandesMoyennes:138, tendanceDemandes:2 },
-        "66": { postesMoyens:28, tendancePostes:-1, demandesMoyennes:164, tendanceDemandes:2 },
-        "67": { postesMoyens:37, tendancePostes:-1, demandesMoyennes:170, tendanceDemandes:2 },
-        "68": { postesMoyens:34, tendancePostes:0, demandesMoyennes:152, tendanceDemandes:1 },
-        "69": { postesMoyens:42, tendancePostes:-2, demandesMoyennes:217, tendanceDemandes:2 },
-        "70": { postesMoyens:35, tendancePostes:2, demandesMoyennes:94, tendanceDemandes:-1 },
-        "71": { postesMoyens:34, tendancePostes:1, demandesMoyennes:125, tendanceDemandes:0 },
-        "72": { postesMoyens:34, tendancePostes:1, demandesMoyennes:124, tendanceDemandes:0 },
-        "73": { postesMoyens:26, tendancePostes:-2, demandesMoyennes:161, tendanceDemandes:2 },
-        "74": { postesMoyens:28, tendancePostes:-2, demandesMoyennes:187, tendanceDemandes:2 },
-        "75": { postesMoyens:47, tendancePostes:-1, demandesMoyennes:215, tendanceDemandes:2 },
-        "76": { postesMoyens:41, tendancePostes:1, demandesMoyennes:166, tendanceDemandes:1 },
-        "77": { postesMoyens:42, tendancePostes:0, demandesMoyennes:173, tendanceDemandes:1 },
-        "78": { postesMoyens:40, tendancePostes:-1, demandesMoyennes:185, tendanceDemandes:2 },
-        "79": { postesMoyens:32, tendancePostes:1, demandesMoyennes:121, tendanceDemandes:1 },
-        "80": { postesMoyens:38, tendancePostes:2, demandesMoyennes:123, tendanceDemandes:0 },
-        "81": { postesMoyens:30, tendancePostes:0, demandesMoyennes:130, tendanceDemandes:1 },
-        "82": { postesMoyens:29, tendancePostes:0, demandesMoyennes:126, tendanceDemandes:1 },
-        "83": { postesMoyens:32, tendancePostes:-2, demandesMoyennes:195, tendanceDemandes:2 },
-        "84": { postesMoyens:30, tendancePostes:-1, demandesMoyennes:147, tendanceDemandes:2 },
-        "85": { postesMoyens:30, tendancePostes:-2, demandesMoyennes:172, tendanceDemandes:2 },
-        "86": { postesMoyens:33, tendancePostes:1, demandesMoyennes:122, tendanceDemandes:1 },
-        "87": { postesMoyens:33, tendancePostes:1, demandesMoyennes:113, tendanceDemandes:0 },
-        "88": { postesMoyens:36, tendancePostes:2, demandesMoyennes:107, tendanceDemandes:-1 },
-        "89": { postesMoyens:34, tendancePostes:1, demandesMoyennes:108, tendanceDemandes:-1 },
-        "90": { postesMoyens:32, tendancePostes:2, demandesMoyennes:96, tendanceDemandes:-1 },
-        "91": { postesMoyens:39, tendancePostes:-1, demandesMoyennes:180, tendanceDemandes:2 },
-        "92": { postesMoyens:43, tendancePostes:0, demandesMoyennes:189, tendanceDemandes:2 },
-        "93": { postesMoyens:51, tendancePostes:2, demandesMoyennes:164, tendanceDemandes:-1 },
-        "94": { postesMoyens:42, tendancePostes:0, demandesMoyennes:175, tendanceDemandes:1 },
-        "95": { postesMoyens:42, tendancePostes:1, demandesMoyennes:161, tendanceDemandes:1 },
-        "971": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:163, tendanceDemandes:2 },
-        "972": { postesMoyens:23, tendancePostes:-2, demandesMoyennes:160, tendanceDemandes:2 },
-        "973": { postesMoyens:31, tendancePostes:1, demandesMoyennes:121, tendanceDemandes:1 },
-        "974": { postesMoyens:27, tendancePostes:-2, demandesMoyennes:194, tendanceDemandes:2 },
-        "976": { postesMoyens:39, tendancePostes:2, demandesMoyennes:100, tendanceDemandes:-2 },
-      };
+
       function setStatus(msg){
         elements.statusBox.textContent = msg;
       }
@@ -664,168 +561,7 @@
         return real;
       }
 
-      function metroScore(meta){
-        const cities = meta.bigCities || [];
-        const pop = parsePopulation(meta.population);
-        let base = 0;
-        if(pop >= 1500000) base += 0.35;
-        else if(pop >= 900000) base += 0.26;
-        else if(pop >= 500000) base += 0.18;
-        else if(pop >= 250000) base += 0.10;
-        base += Math.min(cities.length * 0.06, 0.24);
-        return clamp(base, 0, 1);
-      }
 
-      function flowTrendToFactor(t){
-        const trend = Number(t || 0);
-        if(trend >= 2) return 1.22;
-        if(trend >= 1) return 1.10;
-        if(trend <= -2) return 0.80;
-        if(trend <= -1) return 0.90;
-        return 1;
-      }
-
-      function getDeptFlowStats(code){
-        return DEPT_FLOW_STATS[code] || {
-          postesMoyens: 24,
-          tendancePostes: 0,
-          demandesMoyennes: 95,
-          tendanceDemandes: 0
-        };
-      }
-
-      function flowCapacityIndex(code){
-        const st = getDeptFlowStats(code);
-        const base = clamp(st.postesMoyens / 72, 0.08, 1);
-        return clamp(base * flowTrendToFactor(st.tendancePostes), 0.06, 1);
-      }
-
-      function flowDemandIndex(code){
-        const st = getDeptFlowStats(code);
-        const base = clamp(st.demandesMoyennes / 340, 0.08, 1);
-        return clamp(base * flowTrendToFactor(st.tendanceDemandes), 0.06, 1.2);
-      }
-
-      function flowPressureIndex(code){
-        const cap = flowCapacityIndex(code);
-        const dem = flowDemandIndex(code);
-        const raw = dem / Math.max(cap, 0.08);
-        return clamp(raw / 2, 0.22, 1.4);
-      }
-
-      function capacityIndex(meta, code){
-        const pop = parsePopulation(meta.population);
-        let popScore = 0;
-        if(pop >= 1800000) popScore = 1.00;
-        else if(pop >= 1300000) popScore = 0.88;
-        else if(pop >= 900000) popScore = 0.74;
-        else if(pop >= 600000) popScore = 0.61;
-        else if(pop >= 350000) popScore = 0.48;
-        else if(pop >= 180000) popScore = 0.34;
-        else popScore = 0.22;
-
-        const cityCountScore = clamp((meta.bigCities?.length || 1) / 4, 0.20, 1);
-        const tensionScore = clamp(meta.tension || 0.5, 0, 1);
-        const metro = metroScore(meta);
-        const flowCap = flowCapacityIndex(code);
-
-        return clamp(
-          (popScore * 0.26) +
-          (cityCountScore * 0.10) +
-          (tensionScore * 0.16) +
-          (metro * 0.10) +
-          (flowCap * 0.38),
-          0.05,
-          1
-        );
-      }
-
-      function demandIndex(meta, code){
-        const housingScore = housingToScore(meta.housing);
-        const metro = metroScore(meta);
-        const seaBonus = meta.sea ? 0.10 : 0;
-        const mountainBonus = meta.mountain ? 0.08 : 0;
-        const flowDem = flowDemandIndex(code);
-
-        return clamp(
-          ((meta.attractivite || 0.5) * 0.20) +
-          ((meta.quality || 0.5) * 0.10) +
-          (housingScore * 0.08) +
-          (metro * 0.08) +
-          seaBonus +
-          mountainBonus +
-          (flowDem * 0.44),
-          0.05,
-          1.25
-        );
-      }
-
-      function securityProfile(meta, code, ordre, totalWishes){
-        if(totalWishes <= 1) return 0;
-        const lateRatio = ordre / totalWishes;
-        const lowDemand = 1 - demandIndex(meta, code);
-        const goodCapacity = capacityIndex(meta, meta.code || "");
-
-        if(lateRatio < 0.42) return 0;
-
-        return clamp(
-          ((lateRatio - 0.42) / 0.58) * 0.28 +
-          (lowDemand * 0.15) +
-          (goodCapacity * 0.07),
-          0,
-          0.34
-        );
-      }
-
-      function wishOrderFactor(ordre, totalWishes, pondChoix){
-        const pos = (ordre - 1) / Math.max(totalWishes - 1, 1);
-        const earlyBoost = Math.pow(1 - pos, 1.35);
-        return clamp(
-          1 + ((earlyBoost - 0.5) * pondChoix * 0.34),
-          0.56,
-          1.42
-        );
-      }
-
-      function ambitionPenalty(meta, ordre, totalWishes, rankStrength, f){
-        const dem = demandIndex(meta, meta.code);
-        const cap = capacityIndex(meta, meta.code);
-        const posRatio = ordre / Math.max(totalWishes, 1);
-
-        if(posRatio > 0.45) return 0;
-
-        const rankFragility = 1 - rankStrength;
-        const overDemand = Math.max(0, dem - cap);
-        const glam = Math.max(0, (meta.attractivite || 0.5) - 0.72);
-        const earlyPressure = 1 - posRatio;
-
-        let penalty =
-          (rankFragility * 0.28) +
-          (overDemand * 0.34) +
-          (glam * 0.22) +
-          (earlyPressure * 0.16);
-
-        if(f.listeType === "LC") penalty *= 1.12;
-        if(ordre <= 5 && dem > 0.78) penalty *= 1.18;
-        if(ordre <= 10 && dem > 0.84) penalty *= 1.15;
-
-        return clamp(penalty, 0, 0.55);
-      }
-
-      function rankStrengthFromInputs(rang, totalPostes, listeType){
-        const ratio = clamp(rang / Math.max(totalPostes,1), 0, 4);
-        let s = 1 - ratio;
-
-        if(listeType === "LC"){
-          s *= 0.50;
-          if(rang > totalPostes * 0.25) s *= 0.88;
-          if(rang > totalPostes * 0.35) s *= 0.86;
-        } else {
-          s *= 1.04;
-        }
-
-        return clamp(s, 0.015, 0.98);
-      }
 
       function badgeHtml(stateData, wishesCount){
         const arr = [];
@@ -856,47 +592,9 @@
       }
 
       function parseSouhaits(text){
-        const lines = text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
-        const out = [], seen = new Set(), rejected = [], duplicates = [];
-        for(const line of lines){
-          const code = findDeptCode(line);
-          if(!code){ rejected.push(line); continue; }
-          if(seen.has(code)){ duplicates.push(code); continue; }
-          seen.add(code); out.push({code,nom:deptDB[code].nom,raw:line});
-        }
-        state.inputWarnings = [rejected.length ? `Lignes non reconnues : ${rejected.join(", ")}.` : "",
-          duplicates.length ? `Départements en double ignorés : ${duplicates.join(", ")}.` : ""].filter(Boolean).join(" ");
-        return out;
-      }
-
-      function aggregatePredictionsByDept(results){
-        const byDept = new Map();
-
-        for(const row of results){
-          if(!byDept.has(row.code)){
-            byDept.set(row.code, {
-              ...row,
-              occurrenceCount: 1,
-              occurrenceOrders: [row.ordre]
-            });
-            continue;
-          }
-
-          const agg = byDept.get(row.code);
-          const countBefore = agg.occurrenceCount;
-
-          agg.proba += row.proba;
-          agg.occurrenceCount += 1;
-          agg.occurrenceOrders.push(row.ordre);
-          agg.conditionalChance = Math.max(agg.conditionalChance, row.conditionalChance);
-          agg.remainingAfter = Math.min(agg.remainingAfter, row.remainingAfter);
-          agg.security = Math.max(agg.security, row.security);
-          agg.ambition = Math.min(agg.ambition, row.ambition);
-          agg.score = ((agg.score * countBefore) + row.score) / agg.occurrenceCount;
-          agg.ordre = Math.min(agg.ordre, row.ordre);
-        }
-
-        return Array.from(byDept.values()).sort((a,b) => a.ordre - b.ordre);
+        const parsed=SouhaitsDirections.parse(text,deptDB,window.SOUHAITS_DIRECTION_CATALOG);
+        state.inputWarnings=[parsed.unknown.length?`Lignes non reconnues (direction et département requis) : ${parsed.unknown.join(', ')}.`:'',parsed.duplicates.length?`Vœux exactement en double ignorés : ${parsed.duplicates.join(', ')}.`:''].filter(Boolean).join(' ');
+        return parsed.wishes;
       }
 
       function getFormData(){
@@ -909,9 +607,7 @@
           csEnfant: elements.csEnfant.checked,
           csSoutien: elements.csSoutien.checked,
           modeLonguenesse: elements.modeLonguenesse.checked,
-          pondChoix: elements.pondChoix.value,
-          pondAttrac: elements.pondAttrac.value,
-          pondTension: elements.pondTension.value,
+          campaign:elements.campaign.value,rankMode:elements.rankMode.value,mainSize:elements.mainSize.value,internalSize:elements.internalSize.value,priorityDept:findDeptCode(elements.priorityDept.value)||'', 
           souhaits: elements.souhaits.value
         };
       }
@@ -920,15 +616,13 @@
         if(!data) return;
         elements.listeType.value = data.listeType || "LC";
         elements.rang.value = data.rang || "";
-        elements.totalPostes.value = data.totalPostes || "790";
+        elements.totalPostes.value = data.campaign ? data.totalPostes || "1152" : "1152";
         elements.prioHandicap.checked = !!data.prioHandicap;
         elements.prioConjoint.checked = !!data.prioConjoint;
         elements.csEnfant.checked = !!data.csEnfant;
         elements.csSoutien.checked = !!data.csSoutien;
         elements.modeLonguenesse.checked = !!data.modeLonguenesse;
-        elements.pondChoix.value = data.pondChoix ?? "1.2";
-        elements.pondAttrac.value = data.pondAttrac ?? "2.2";
-        elements.pondTension.value = data.pondTension ?? "1.8";
+        elements.campaign.value=data.campaign||'2027';elements.rankMode.value=data.rankMode||'external';elements.mainSize.value=data.mainSize||'1051';elements.internalSize.value=data.internalSize??'';elements.priorityDept.value=data.priorityDept||'';
         elements.souhaits.value = typeof data.souhaits === "string" ? data.souhaits : "";
         updateWishCount();
       }
@@ -948,344 +642,47 @@
         } catch (_error) { setStatus("Ancienne sauvegarde illisible ou stockage indisponible. Vous pouvez continuer."); }
       }
 
-      function computeConditionalChance({f, meta, ordre, totalWishes, rankStrength}){
-        const pondAttrac = Number(f.pondAttrac || 2.2);
-        const pondTension = Number(f.pondTension || 1.8);
-        const pondChoix = Number(f.pondChoix || 1.2);
-
-        const cap = capacityIndex(meta, meta.code);
-        const dem = demandIndex(meta, meta.code);
-        const flowCap = flowCapacityIndex(meta.code);
-        const flowDem = flowDemandIndex(meta.code);
-        const flowPressure = flowPressureIndex(meta.code);
-        const sec = securityProfile(meta, meta.code || "", ordre, totalWishes);
-        const orderFactor = wishOrderFactor(ordre, totalWishes, pondChoix);
-        const ambition = ambitionPenalty(meta, ordre, totalWishes, rankStrength, f);
-
-        let priorityBoost = 0;
-        if(f.prioHandicap) priorityBoost += 0.12;
-        if(f.prioConjoint) priorityBoost += 0.06;
-        if(f.csEnfant) priorityBoost += 0.04;
-        if(f.csSoutien) priorityBoost += 0.03;
-
-        const weightedDemand = clamp(dem * flowPressure * (0.72 + pondAttrac * 0.17), 0.04, 1.75);
-        const weightedTension = clamp((meta.tension || 0.5) * (0.75 + pondTension * 0.16), 0.04, 1.35);
-        const weightedFlowCap = clamp(flowCap * 1.18, 0.05, 1.18);
-        const weightedFlowDem = clamp(flowDem * 1.24, 0.05, 1.35);
-
-        let chance =
-          0.004 +
-          (rankStrength * 0.37) +
-          (cap * 0.14) +
-          (weightedFlowCap * 0.18) +
-          (weightedTension * 0.10) -
-          (weightedDemand * 0.23) -
-          (weightedFlowDem * 0.18) -
-          (ambition * 0.34) +
-          (sec * 0.18) +
-          priorityBoost;
-
-        chance *= orderFactor;
-
-        if(f.listeType === "LC"){
-          chance *= 0.90;
-
-          if(ordre <= 5 && dem > 0.75) chance *= 0.80;
-          if(ordre <= 10 && dem > 0.82) chance *= 0.84;
-          if(ordre <= 15 && dem > 0.88) chance *= 0.86;
-
-          if(ordre > Math.max(18, Math.floor(totalWishes * 0.55)) && dem < 0.55) chance *= 0.94;
-          if(ordre > Math.max(24, Math.floor(totalWishes * 0.70)) && cap > 0.48 && dem < 0.50) chance *= 0.90;
-        } else {
-          chance *= 1.08;
-        }
-
-        const depthRatio = (ordre - 1) / Math.max(totalWishes - 1, 1);
-        const depthPenalty = 1 - (0.34 * Math.pow(depthRatio, 1.1));
-        chance *= clamp(depthPenalty, 0.62, 1);
-
-        if(flowCap > 0.72 && flowDem < 0.55) chance *= 1.10;
-        if(flowCap < 0.38 && flowDem > 0.78) chance *= 0.84;
-        if(meta.attractivite < 0.38 && cap > 0.42) chance *= 1.14;
-        if(meta.attractivite > 0.88 && ordre <= 20) chance *= 0.84;
-        if(meta.tension > 0.80) chance *= 1.03;
-
-        if(f.modeLonguenesse && meta.nom === "Pas-de-Calais"){
-          chance *= 1.14 + (deptDB["62"]?.longuenesseBonus || 0) * 0.12;
-        }
-
-        return clamp(chance, 0.001, 0.42);
-      }
-
       function buildPredictions(){
-        const f = getFormData();
-        const wishes = parseSouhaits(f.souhaits);
-        const rang = Number(f.rang || 0);
-        const totalPostes = Number(f.totalPostes);
-        if(!Number.isInteger(rang) || rang < 1 || !Number.isInteger(totalPostes) || totalPostes < 100 ||
-          [f.pondChoix, f.pondAttrac, f.pondTension].some(v => v === "" || !Number.isFinite(Number(v)) || Number(v) < 0 || Number(v) > 5)){
-          clearPredictions();
-          setStatus("Saisis un rang entier positif, au moins 100 postes et des pondérations entre 0 et 5.");
-          return [];
-        }
-
-        elements.badges.innerHTML = badgeHtml(f, wishes.length);
-
-        if(!wishes.length){
-          state.predictions = [];
-          elements.kpiTop3.textContent = "-";
-          elements.kpiOffice.textContent = "-";
-          elements.kpiRank.textContent = "-";
-          elements.kpiDeptScore.textContent = "-";
-          elements.top3.innerHTML = `<div class="topCard">Rien à calculer.</div>`;
-          clearPredictions();
-          setStatus(`Ajoute au moins un département reconnu. ${state.inputWarnings || ""}`);
-          return [];
-        }
-
-        const rankStrength = rankStrengthFromInputs(rang, totalPostes, f.listeType);
-        const wishCodeSet = new Set(wishes.map(w=>w.code));
-
-        let remaining = 1;
-        const results = [];
-
-        for(let idx = 0; idx < wishes.length; idx++){
-          const w = wishes[idx];
-          const meta = { ...(deptDB[w.code] || {
-            nom:w.nom, attractivite:0.50, tension:0.50, quality:0.50, sea:false, mountain:false,
-            housing:"€€", bigCities:[w.nom], population:"~300k"
-          }), code:w.code };
-
-          const ordre = idx + 1;
-          const conditionalChance = computeConditionalChance({
-            f, meta, ordre, totalWishes:wishes.length, rankStrength
-          });
-
-          const assignmentProbability = remaining * conditionalChance;
-          remaining *= (1 - conditionalChance);
-
-          const cap = capacityIndex(meta, meta.code);
-          const dem = demandIndex(meta, meta.code);
-          const sec = securityProfile(meta, w.code, ordre, wishes.length);
-          const ambition = ambitionPenalty(meta, ordre, wishes.length, rankStrength, f);
-
-          const score =
-            (rankStrength * 0.34) +
-            (cap * 0.22) -
-            (dem * 0.24) -
-            (ambition * 0.20) +
-            (sec * 0.12) +
-            (conditionalChance * 0.32);
-
-          results.push({
-            ordre,
-            code: w.code,
-            nom: meta.nom,
-            score: clamp(score, 0.001, 10),
-            proba: assignmentProbability * 100,
-            conditionalChance: conditionalChance * 100,
-            remainingAfter: remaining * 100,
-            attractivite: meta.attractivite,
-            tension: meta.tension,
-            quality: meta.quality,
-            sea: !!meta.sea,
-            mountain: !!meta.mountain,
-            inWishList: wishCodeSet.has(w.code),
-            capacity: cap,
-            demand: dem,
-            security: sec,
-            ambition,
-            flowCapacity: flowCapacityIndex(w.code),
-            flowDemand: flowDemandIndex(w.code),
-            flowPressure: flowPressureIndex(w.code),
-            flowStats: getDeptFlowStats(w.code)
-          });
-        }
-
-        const aggregatedResults = aggregatePredictionsByDept(results);
-        const officeRisk = clamp(remaining * 100, 0, 100);
-        const sorted = [...aggregatedResults].sort((a,b) => b.proba - a.proba);
-        const top3 = sorted.slice(0,3);
-        const chanceTop3 = top3.reduce((a,b)=>a+b.proba,0);
-
-        elements.kpiTop3.textContent = pct(chanceTop3);
-        elements.kpiOffice.textContent = pct(officeRisk);
-        elements.kpiRank.textContent = `${Math.round(clamp(rankStrength,0,1)*100)}/100`;
-
-        elements.top3.innerHTML = top3.map((r, i) => `
-          <button type="button" class="topCard" data-dept="${r.code}">
-            <span class="rank">PISTE 0${i+1} <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></span>
-            <h3>${r.code} · ${r.nom}</h3>
-            <div class="pct">${pct(r.proba)}</div><span class="scoreCaption">Part simulée</span>
-            <div class="bar"><span style="width:${clamp(r.proba,0,100)}%"></span></div>
-            <div class="small muted">
-              Votre vœu n°${r.ordre} dans la liste.
-            </div>
-          </button>
-        `).join("");
-
-        state.predictions = aggregatedResults;
-        elements.top3.querySelectorAll("[data-dept]").forEach(button => button.addEventListener("click", () => openDepartment(button.dataset.dept)));
-        renderAllResults();
-        state.heatmapScale = computeHeatmapScale(aggregatedResults);
-        refreshHeatmapLegend();
-        updateMapStyling();
-
-        if(state.selectedDeptCode){
-          const selected = aggregatedResults.find(x => x.code === state.selectedDeptCode);
-          updateDgfipPanelForDept(state.selectedDeptCode, state.selectedDeptName, selected);
-          drawRadar(selected);
-        } else {
-          drawRadar(null);
-        }
-
-        updateWishCount();
-        setStatus(`Simulation V9 : ${wishes.length} départements analysés. Risque d’office simulé : ${pct(officeRisk)}. ${state.inputWarnings || ""}`);
-        updateScenarioSummary();
-        refreshSelectedWishButton();
-        if(state.selectedDeptCode) updateGlobalInfo(state.selectedDeptCode,state.selectedDeptName,getPredictionByCode(state.selectedDeptCode),state.selectedDeptRequestId,state.realDataCache[state.selectedDeptCode],false);
-        animateResults();
-        return aggregatedResults;
+        const f=getFormData(),wishes=parseSouhaits(f.souhaits);
+        let sim;try{sim=SouhaitsPrediction.simulate(wishes,f,window.SOUHAITS_HISTORY,window.SOUHAITS_DIRECTION_CATALOG,state.importedHistory);}catch(error){clearPredictions();setStatus(error.message);return [];}
+        if(!wishes.length){clearPredictions();setStatus(`Ajoute au moins une direction reconnue. ${state.inputWarnings}`);return [];}
+        state.simulation=sim;state.predictions=sim.rows;state.departmentPredictions=sim.byDepartment;
+        elements.badges.innerHTML=badgeHtml(f,wishes.length);
+        const top=[...sim.rows].sort((a,b)=>b.proba-a.proba).slice(0,3);
+        elements.kpiTop3.textContent=pct(top.reduce((sum,r)=>sum+r.proba,0));elements.kpiOffice.textContent=pct(sim.unserved);
+        elements.kpiRank.textContent=`${Math.round(sim.rankRange[0])}–${Math.round(sim.rankRange[1])}`;
+        elements.top3.innerHTML=top.map((r,i)=>`<button type="button" class="topCard" data-dept="${r.code}"><span class="rank">PISTE 0${i+1} · VŒU ${r.ordre}</span><h3>${escapeHtml(r.nom)}</h3><span class="directionDept">${escapeHtml(r.code+' · '+r.departmentName)}</span><div class="pct">${pct(r.proba)}</div><span class="scoreCaption">Scénario central · ${pct(r.low)} à ${pct(r.high)}</span><div class="bar"><span style="width:${r.proba}%"></span></div><div class="small muted">${escapeHtml(r.evidence)}</div></button>`).join('');
+        elements.top3.querySelectorAll('[data-dept]').forEach(button=>button.addEventListener('click',()=>openDepartment(button.dataset.dept)));
+        renderAllResults();state.heatmapScale=computeHeatmapScale(sim.byDepartment);refreshHeatmapLegend();updateMapStyling();
+        if(state.selectedDeptCode){const p=getPredictionByCode(state.selectedDeptCode);updateDgfipPanelForDept(state.selectedDeptCode,state.selectedDeptName,p);drawRadar(p);updateGlobalInfo(state.selectedDeptCode,state.selectedDeptName,p,state.selectedDeptRequestId,state.realDataCache[state.selectedDeptCode],false);}else drawRadar(null);
+        updateWishCount();updateScenarioSummary();refreshSelectedWishButton();
+        const missingPriority=(f.prioHandicap||f.prioConjoint||f.csEnfant||f.csSoutien)&&!f.priorityDept?' Priorité non appliquée : indiquez son département.':'';
+        setStatus(`Simulation V10 : ${wishes.length} vœux de direction, ${sim.byDepartment.length} départements. Modèle exploratoire, ${sim.iterations*3} scénarios. ${sim.importedWishes}/${wishes.length} vœux avec données importées.${missingPriority} ${state.inputWarnings}`);
+        animateResults();return sim.rows;
       }
+      function getPredictionByCode(code){return state.departmentPredictions.find(p=>p.code===code)||null;}
+      
 
-      function getPredictionByCode(code){
-        return state.predictions.find(p => p.code === code) || null;
-      }
-
-      function updateDgfipPanelForDept(code, name, pred){
-        elements.selectedDeptBadge.textContent = code ? `${code} ${name}` : "Aucun département";
-        elements.globalDeptBadge.textContent = code ? `${code} ${name}` : "-";
-
-        if(!code){
-          elements.kpiDeptScore.textContent = "-";
-          elements.dgfipDeptInfo.textContent = "Aucun département sélectionné.";
-          return;
-        }
-
-        const meta = { ...(deptDB[code] || {}), code };
-        elements.kpiDeptScore.textContent = pred ? scoreStr(pred.score) : "hors liste";
-
-        const f = getFormData();
-        let txt = `<strong>${code} ${name}</strong><br><br>`;
-
-        if(pred){
-          txt += `Ce département est dans ta liste au rang <strong>${pred.ordre}</strong>. `;
-          txt += `Probabilité finale simulée <strong>${pct(pred.proba)}</strong>. `;
-          txt += `Chance conditionnelle si on arrive jusqu’ici <strong>${pct(pred.conditionalChance)}</strong>. `;
-          txt += `Probabilité résiduelle de continuer après ce vœu <strong>${pct(pred.remainingAfter)}</strong>. `;
-        } else {
-          txt += `Ce département n’est pas dans ta liste actuelle. `;
-        }
-
-        txt += `<br><br>`;
-        txt += `Demande estimée <strong>${Math.round((pred?.demand ?? demandIndex(meta, code)) * 100)}/100</strong>, `;
-        txt += `capacité d’absorption estimée <strong>${Math.round((pred?.capacity ?? capacityIndex(meta, meta.code || "")) * 100)}/100</strong>, `;
-        txt += `malus d’ambition <strong>${Math.round((pred?.ambition ?? 0) * 100)}/100</strong>, `;
-        const flowStats = pred?.flowStats || getDeptFlowStats(code);
-        txt += `tension besoins <strong>${Math.round((meta.tension || 0.5) * 100)}/100</strong>. `;
-        txt += `Hypothèses locales de flux (non officielles) : <strong>${flowStats.postesMoyens}</strong> postes moyens (${flowStats.tendancePostes >= 0 ? "+" : ""}${flowStats.tendancePostes}), `;
-        txt += `<strong>${flowStats.demandesMoyennes}</strong> demandes moyennes (${flowStats.tendanceDemandes >= 0 ? "+" : ""}${flowStats.tendanceDemandes}). `;
-
-        if(pred && pred.security > 0.08){
-          txt += `Ce vœu joue un rôle de sécurisation. `;
-        }
-
-        if(f.prioHandicap){
-          txt += `Priorité handicap activée. `;
-        }
-        if(f.prioConjoint){
-          txt += `Priorité conjoint/PACS activée. `;
-        }
-        if(f.csEnfant || f.csSoutien){
-          txt += `Critère(s) supplémentaire(s) activé(s). `;
-        }
-
-        if(code === "62" && f.modeLonguenesse){
-          txt += `Simulation Longuenesse active pour le 62. `;
-        }
-
-        txt += `<br><br><span class="muted">Lecture rapide :</span> `;
-        if(pred){
-          if(pred.proba >= 15) txt += `ça sort bien.`;
-          else if(pred.proba >= 8) txt += `c’est crédible.`;
-          else if(pred.proba >= 4) txt += `c’est jouable mais chaud.`;
-          else if(pred.proba >= 2) txt += `c’est fragile.`;
-          else txt += `ça reste faible.`;
-        } else {
-          txt += `ajoute-le à la liste pour le simuler.`;
-        }
-
-        elements.dgfipDeptInfo.innerHTML = txt;
+      function updateDgfipPanelForDept(code,name,pred){
+        elements.selectedDeptBadge.textContent=code?`${code} ${name}`:'Aucun département';elements.globalDeptBadge.textContent=code?`${code} ${name}`:'—';
+        elements.kpiDeptScore.textContent=pred?pct(pred.proba):'hors simulation';
+        if(!code){elements.dgfipDeptInfo.textContent='Choisissez un département.';return;}
+        const rows=state.predictions.filter(r=>r.code===code),catalog=window.SOUHAITS_DIRECTION_CATALOG;
+        const staff=window.SOUHAITS_HISTORY.staff.find(r=>catalog.find(d=>d.id===r.directionCode)?.kind==='territorial'&&catalog.find(d=>d.id===r.directionCode)?.departments[0]===code);
+        let html=`<strong>${escapeHtml(code+' '+name)}</strong><br>`;
+        html+=pred?`${rows.length} direction(s) dans votre liste. Part cumulée du département : <strong>${pct(pred.proba)}</strong>, plage ${pct(pred.low)}–${pct(pred.high)}. Les directions sont des issues distinctes ; leurs parts s’additionnent.`:'La fiche du territoire est disponible immédiatement, sans liste ni calcul. Ajoutez sa direction territoriale ou une direction spécialisée pour comparer vos vœux.';
+        if(rows.length)html+='<ul>'+rows.map(r=>`<li>Vœu ${r.ordre} · <strong>${escapeHtml(r.nom)}</strong> : ${pct(r.proba)} (${pct(r.low)}–${pct(r.high)})<br><span class="muted">${escapeHtml(r.evidence)}</span></li>`).join('')+'</ul>';
+        if(staff)html+=`<br>Repère historique <strong>2023</strong> : ${staff.authorized} emplois C autorisés, ${staff.headcount} agents après mouvement (${staff.balance>=0?'+':''}${staff.balance}). <strong>Ce sont des effectifs, pas des postes ouverts aux stagiaires.</strong>`;
+        html+='<br><br>Les plages comparent trois hypothèses de disponibilité. Elles ne constituent pas un intervalle de confiance ni une probabilité individuelle validée. Une direction spécialisée peut avoir plusieurs implantations : chaque département doit être précisé.';
+        if(elements.modeLonguenesse.checked)html+='<br><br><strong>Longuenesse :</strong> appel spécifique séparé. En 2026, 40 postes annoncés et 27 affectations recensées. Aucun bonus artificiel ajouté au 62.';
+        elements.dgfipDeptInfo.innerHTML=html;
       }
 
       function drawRadar(pred){
-        const canvas = elements.radarCanvas;
-        const ctx = canvas.getContext("2d");
-        const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-        const h = canvas.height = canvas.clientHeight * devicePixelRatio;
-        ctx.scale(devicePixelRatio, devicePixelRatio);
-        ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
-
-        const cx = canvas.clientWidth / 2;
-        const cy = canvas.clientHeight / 2;
-        const radius = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.32;
-        const labels = ["Affectation","Capacité","Sécurisation","Cadre vie","Demande"];
-        const values = pred ? [
-          clamp((pred.proba || 0) / 20, 0, 1),
-          clamp(pred.capacity || 0.5, 0, 1),
-          clamp((pred.security || 0) / 0.25, 0, 1),
-          clamp(pred.quality || 0.5, 0, 1),
-          clamp(pred.demand || 0.5, 0, 1)
-        ] : [0,0,0,0,0];
-
-        for(let ring=1; ring<=5; ring++){
-          ctx.beginPath();
-          for(let i=0;i<labels.length;i++){
-            const angle = -Math.PI/2 + (Math.PI*2 * i / labels.length);
-            const r = radius * ring / 5;
-            const x = cx + Math.cos(angle) * r;
-            const y = cy + Math.sin(angle) * r;
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-          }
-          ctx.closePath();
-          ctx.strokeStyle = "rgba(185,216,183,.16)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-
-        for(let i=0;i<labels.length;i++){
-          const angle = -Math.PI/2 + (Math.PI*2 * i / labels.length);
-          const x = cx + Math.cos(angle) * radius;
-          const y = cy + Math.sin(angle) * radius;
-          ctx.beginPath();
-          ctx.moveTo(cx,cy);
-          ctx.lineTo(x,y);
-          ctx.strokeStyle = "rgba(185,216,183,.16)";
-          ctx.stroke();
-
-          const lx = cx + Math.cos(angle) * (radius + 22);
-          const ly = cy + Math.sin(angle) * (radius + 18);
-          ctx.fillStyle = "#9fbea7";
-          ctx.font = `${canvas.clientWidth < 260 ? 10 : 12}px Inter, Arial`;
-          ctx.textAlign = "center";
-          const halfLabel = ctx.measureText(labels[i]).width / 2 + 4;
-          ctx.fillText(labels[i], clamp(lx, halfLabel, canvas.clientWidth - halfLabel), ly);
-        }
-
-        ctx.beginPath();
-        for(let i=0;i<values.length;i++){
-          const angle = -Math.PI/2 + (Math.PI*2 * i / values.length);
-          const r = radius * values[i];
-          const x = cx + Math.cos(angle) * r;
-          const y = cy + Math.sin(angle) * r;
-          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = "rgba(175,208,145,.20)";
-        ctx.strokeStyle = "rgba(191,219,159,.95)";
-        ctx.lineWidth = 2;
-        ctx.fill();
-        ctx.stroke();
+        const canvas=elements.radarCanvas,ctx=canvas.getContext('2d');if(!ctx)return;
+        const width=canvas.clientWidth,height=canvas.clientHeight;canvas.width=width*devicePixelRatio;canvas.height=height*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);ctx.clearRect(0,0,width,height);
+        const dark=document.documentElement.dataset.theme==='dark';ctx.font='12px Arial';ctx.textAlign='left';
+        ['Prudent','Central','Favorable'].forEach((label,i)=>{const y=35+i*55,value=pred?.scenarios?.[i]||0;ctx.fillStyle=dark?'#d8e9e1':'#244d45';ctx.fillText(`${label} : ${pct(value)}`,12,y);ctx.fillStyle=dark?'#294a42':'#e3eae4';ctx.fillRect(12,y+8,width-24,14);ctx.fillStyle=['#dc9c49','#258775','#6b73d6'][i];ctx.fillRect(12,y+8,(width-24)*value/100,14);});
       }
 
       function styleForFeature(feature){
@@ -1351,6 +748,7 @@
 
       function handleDeptClick(code, name){
         state.photoController?.abort();
+        if(state.selectedDeptCode!==code)elements.directionChoice.value="";
         state.selectedDeptCode = code;
         state.selectedDeptName = name;
         state.selectedDeptRequestId += 1;
@@ -1373,7 +771,7 @@
           {label:"Densité calculée",value:geography?.density||0,unit:" hab/km²",desc:"Surface approchée issue des contours simplifiés"},
           {label:"Communes dans la base",value:geography?.communesCount||0,unit:"",desc:"API Découpage administratif"},
           {label:"Accessibilité logement",value:Math.round((1-housingToScore(meta.housing||"€€"))*100),unit:"/100",desc:"Hypothèse non officielle du simulateur"},
-          {label:"Capacité d’accueil DGFiP",value:Math.round((pred?.capacity??capacityIndex(meta,meta.code))*100),unit:"/100",desc:"Hypothèse locale, pas une liste de postes"},
+
           {label:"Ville la plus peuplée",value:cityData[0]?.estPop||0,unit:" hab",desc:cityData[0]?.name||"Non renseigné"}
         ];
       }
@@ -1458,7 +856,7 @@
             const card=document.createElement('figure');card.className='photo';const image=document.createElement('img');image.src=photo.src;image.alt=photo.title;image.loading='lazy';image.referrerPolicy='no-referrer';
             image.addEventListener('error',()=>{card.remove();if(!elements.photoGrid.children.length)elements.photoStatus.textContent='Images momentanément indisponibles. Réessayez avec le bouton ci-dessous.';});
             const caption=document.createElement('figcaption');caption.className='cap';const link=document.createElement('a');link.href=photo.source;link.textContent=photo.title;link.target='_blank';link.rel='noopener noreferrer';
-            const credit=document.createElement('div');credit.textContent=`${stripMarkup(photo.author)||'Auteur sur la source'} · ${stripMarkup(photo.license)}`;caption.append(link,credit);card.append(image,caption);elements.photoGrid.append(card);
+            const credit=document.createElement('div');credit.textContent=`${stripMarkup(photo.author)||'Auteur sur la source'} · ${stripMarkup(photo.license)}`;caption.append(link,credit);const imageLink=document.createElement('a');imageLink.href=photo.source;imageLink.target='_blank';imageLink.rel='noopener noreferrer';imageLink.append(image);card.append(imageLink,caption);elements.photoGrid.append(card);
           }
           elements.photoStatus.textContent=photos.length?`${photos.length} illustrations Wikimedia Commons : cliquez sur une image ou sa légende pour la source et la licence.`:'Aucune photo disponible pour le moment. Les infos locales restent accessibles ; vous pouvez relancer la recherche.';
         }catch(error){if(current())elements.photoStatus.textContent='Photos indisponibles sans connexion ou service temporairement indisponible. Les informations du département restent accessibles.';}
@@ -1570,15 +968,15 @@
         setFormData({
           listeType: "LC",
           rang: "317",
-          totalPostes: "790",
+          totalPostes: "1152",
           prioHandicap: false,
           prioConjoint: false,
           csEnfant: false,
           csSoutien: false,
           modeLonguenesse: false,
-          pondChoix: "1.2",
-          pondAttrac: "2.2",
-          pondTension: "1.8",
+
+
+
           souhaits: [
             "91 Essonne",
             "16 Charente",
@@ -1588,6 +986,7 @@
             "85 Vendée",
             "49 Maine-et-Loire",
             "44 Loire-Atlantique",
+            "44 DiSI Centre-Ouest",
             "37 Indre-et-Loire",
             "82 Tarn-et-Garonne",
             "81 Tarn",
@@ -1606,7 +1005,7 @@
             "35 Ille-et-Vilaine"
           ].join("\n")
         });
-        setStatus("Exemple neutre chargé.");
+        setStatus("Exemple de directions chargé ; les implantations et postes doivent être vérifiés pour la campagne.");
       }
 
       function resetUI(){
@@ -1621,19 +1020,19 @@
         setFormData({
           listeType:"LC",
           rang:"",
-          totalPostes:"790",
+          totalPostes:"1152",
           prioHandicap:false,
           prioConjoint:false,
           csEnfant:false,
           csSoutien:false,
           modeLonguenesse:false,
-          pondChoix:"1.2",
-          pondAttrac:"2.2",
-          pondTension:"1.8",
+
+
+
           souhaits:""
         });
 
-        state.predictions = [];
+        state.predictions = []; state.departmentPredictions=[];state.simulation=null;
         state.heatmapScale = computeHeatmapScale([]);
         refreshHeatmapLegend();
         state.selectedDeptCode = null;
@@ -1679,7 +1078,7 @@
         return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       }
       function clearPredictions(){
-        state.predictions = [];
+        state.predictions = []; state.departmentPredictions=[];state.simulation=null;
         state.heatmapScale = computeHeatmapScale([]);
         ['kpiTop3','kpiOffice','kpiRank','kpiDeptScore'].forEach(key => elements[key].textContent = '-');
         elements.top3.textContent = 'Aucun résultat. Vérifie le formulaire.';
@@ -1689,15 +1088,15 @@
         updateScenarioSummary();
       }
       function renderAllResults(){
-        elements.allResults.innerHTML=`<table><thead><tr><th>Vœu</th><th>Département</th><th>Part simulée</th><th>Ordre</th></tr></thead><tbody>${state.predictions.map((p,index)=>`<tr><td>${p.ordre}</td><td><button type="button" data-dept="${p.code}">${escapeHtml(p.code+' '+p.nom)}</button></td><td>${pct(p.proba)}</td><td class="reorderActions"><button type="button" data-move="-1" data-code="${p.code}" aria-label="Monter ${escapeHtml(p.nom)}" ${index===0?'disabled':''}>↑</button><button type="button" data-move="1" data-code="${p.code}" aria-label="Descendre ${escapeHtml(p.nom)}" ${index===state.predictions.length-1?'disabled':''}>↓</button></td></tr>`).join('')}</tbody></table>`;
+        elements.allResults.innerHTML=`<table><thead><tr><th>Vœu</th><th>Direction / département</th><th>Part simulée</th><th>Ordre</th></tr></thead><tbody>${state.predictions.map((p,index)=>`<tr><td>${p.ordre}</td><td><button type="button" data-dept="${p.code}">${escapeHtml(p.nom)}</button><small class="resultEvidence">${escapeHtml(p.code+' '+p.departmentName)}<br>${escapeHtml(p.evidence)}</small></td><td><strong>${pct(p.proba)}</strong><small class="resultEvidence">${pct(p.low)}–${pct(p.high)}</small></td><td class="reorderActions"><button type="button" data-move="-1" data-code="${p.code}" data-key="${escapeHtml(p.key)}" aria-label="Monter ${escapeHtml(p.nom)}" ${index===0?'disabled':''}>↑</button><button type="button" data-move="1" data-code="${p.code}" data-key="${escapeHtml(p.key)}" aria-label="Descendre ${escapeHtml(p.nom)}" ${index===state.predictions.length-1?'disabled':''}>↓</button></td></tr>`).join('')}</tbody></table>`;
         elements.allResults.querySelectorAll('[data-dept]').forEach(btn=>btn.addEventListener('click',()=>openDepartment(btn.dataset.dept)));
-        elements.allResults.querySelectorAll('[data-move]').forEach(btn=>btn.addEventListener('click',()=>moveWish(btn.dataset.code,Number(btn.dataset.move))));
+        elements.allResults.querySelectorAll('[data-move]').forEach(btn=>btn.addEventListener('click',()=>moveWish(btn.dataset.key,Number(btn.dataset.move))));
       }
+
       function exportResults(){
         if(!state.predictions.length){ setStatus('Lance une simulation avant l’export.'); return; }
         const cell = value => `"${String(value).replace(/"/g,'""')}"`;
-        const rows = [['Ordre','Code','Département','Part simulée (%)','Chance conditionnelle simulée (%)'],
-          ...state.predictions.map(p => [p.ordre,p.code,p.nom,p.proba.toFixed(2),p.conditionalChance.toFixed(2)])];
+        const rows = [['Ordre','Direction','Code département','Département','Part centrale (%)','Plage basse (%)','Plage haute (%)','Base de calcul'],...state.predictions.map(p=>[p.ordre,p.directionCode,p.code,p.departmentName,p.proba.toFixed(2),p.low.toFixed(2),p.high.toFixed(2),p.evidence])];
         const blob = new Blob(['\uFEFF'+rows.map(row => row.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
         const url = URL.createObjectURL(blob), link = document.createElement('a');
         link.href = url; link.download = 'souhaits-simulation.csv'; link.click(); setTimeout(() => URL.revokeObjectURL(url),1000);
@@ -1717,8 +1116,8 @@
         if(state.map && layer){state.map.stop();state.map.fitBounds(layer.getBounds(),{padding:[25,25],maxZoom:9,animate:false});}
       }
       function updateWishCount(){
-        const codes=new Set(elements.souhaits.value.split(/\n+/).map(findDeptCode).filter(Boolean));
-        elements.wishCount.textContent=`${codes.size} département${codes.size>1?'s':''}`;
+        const parsed=SouhaitsDirections.parse(elements.souhaits.value,deptDB,window.SOUHAITS_DIRECTION_CATALOG);
+        elements.wishCount.textContent=`${parsed.wishes.length} vœu${parsed.wishes.length>1?'x':''} · ${parsed.departments} département${parsed.departments>1?'s':''}`;
       }
       function renderLocalAdvice(meta,pred,local){
         const advice=SouhaitsLocal.advice(meta,pred,local);
@@ -1738,10 +1137,10 @@
         const remaining=clamp(100-state.predictions.reduce((sum,p)=>sum+p.proba,0),0,100);
         const title=document.createElement('strong');title.textContent=`${state.predictions.length} vœux, une vue d’ensemble.`;
         const detail=document.createElement('p');detail.textContent=`${top.map(p=>p.nom).join(', ')} arrivent en tête de ce scénario. Le top 3 rassemble ${pct(top.reduce((sum,p)=>sum+p.proba,0))} des affectations simulées.`;
-        const risk=document.createElement('span');risk.className='riskPill';risk.textContent=`Risque résiduel simulé : ${pct(remaining)}`;
+        const risk=document.createElement('span');risk.className='riskPill';risk.textContent=`Hors de cette liste : ${pct(remaining)} (plage ${pct(state.simulation.unservedRange[0])}–${pct(state.simulation.unservedRange[1])}). Ce n’est pas le taux historique d’affectation d’office.`;
         elements.scenarioSummary.dataset.level=remaining>=60?'high':remaining>=30?'watch':'low';
         elements.kpiOffice.closest('.kpi').dataset.level=elements.scenarioSummary.dataset.level;
-        elements.scenarioSummary.append(title,detail,risk);
+        const limits=document.createElement('p');limits.className='modelLimits';limits.textContent=`Modèle exploratoire, non calibré individuellement. Campagnes ${state.simulation.usedYears.join(', ')} ; ${state.simulation.importedWishes}/${state.predictions.length} vœux enrichis par vos données. Les postes et les vœux des autres candidats restent inconnus pour les autres directions.`;elements.scenarioSummary.append(title,detail,risk,limits);
       }
       function animateResults(){
         const panel=document.getElementById('resultats');panel.classList.remove('resultUpdated');
@@ -1751,47 +1150,72 @@
         try {
           const result=SouhaitsLocal.generateWishes(deptDB,{count:Number(elements.testCount.value),scope:elements.testScope.value,profile:elements.testProfile.value});
           if(!result.wishes.length){elements.generatorStatus.textContent='Aucun département ne correspond à ces critères. Essayez un autre profil.';return;}
-          elements.souhaits.value=result.wishes.map(d=>`${d.code} ${d.nom}`).join('\n');
+          let lines=result.wishes.map(d=>`${d.code} ${d.nom}`);
+          if(elements.testSpecialized.checked&&lines.length>=2){const eligible=SouhaitsLocal.generateWishes(deptDB,{count:101,scope:elements.testScope.value,profile:elements.testProfile.value}).wishes;const special=window.SOUHAITS_DIRECTION_CATALOG.filter(d=>d.kind==='specialized').flatMap(d=>d.departments.map(code=>({d,code}))).find(({code})=>eligible.some(w=>w.code===code));if(special){lines=lines.filter(line=>findDeptCode(line)!==special.code);lines.unshift(`${special.code} ${deptDB[special.code].nom}`,`${special.code} ${special.d.id} ${special.d.name}`);lines=lines.slice(0,result.wishes.length);}}
+          elements.souhaits.value=lines.join('\n');
           if(!elements.rang.value)elements.rang.value='317';
           updateWishCount();buildPredictions();
           const first=result.wishes[0];openDepartment(first.code);
-          elements.generatorStatus.textContent=`${result.wishes.length} vœux de test générés, sans doublon.${result.limited?` ${result.available} départements correspondent à ces critères : la liste a été limitée.`:''} Cliquez à nouveau pour varier la liste.`;
+          elements.generatorStatus.textContent=`${result.wishes.length} vœux de test générés, sans doublon.${elements.testSpecialized.checked?' Directions spécialisées ajoutées si une implantation d’exemple correspond aux critères.':''}${result.limited?` ${result.available} départements correspondent à ces critères : la liste a été limitée.`:''} Cliquez à nouveau pour varier la liste.`;
         }catch(error){elements.generatorStatus.textContent=error.message;}
       }
+      function selectedDirection(){
+        const code=state.selectedDeptCode;if(!code)return null;
+        return SouhaitsDirections.parseLine(`${code} ${elements.directionChoice.value||deptDB[code].nom}`,deptDB,window.SOUHAITS_DIRECTION_CATALOG);
+      }
       function refreshSelectedWishButton(){
-        elements.btnToggleWish.disabled=!state.selectedDeptCode;
-        if(!state.selectedDeptCode){elements.btnToggleWish.textContent='Choisissez un département';return;}
-        const included=elements.souhaits.value.split(/\n+/).some(line=>findDeptCode(line)===state.selectedDeptCode);
-        elements.btnToggleWish.dataset.included=String(included);
-        elements.btnToggleWish.textContent=included?`Retirer ${state.selectedDeptCode} de mes vœux`:`Ajouter ${state.selectedDeptCode} à mes vœux`;
+        const selected=selectedDirection();elements.btnToggleWish.disabled=!selected;
+        if(!selected){elements.btnToggleWish.textContent='Choisissez un département et une direction';return;}
+        const included=parseSouhaits(elements.souhaits.value).some(w=>w.key===selected.key);
+        elements.btnToggleWish.dataset.included=String(included);elements.btnToggleWish.textContent=`${included?'Retirer':'Ajouter'} ${selected.nom} (${selected.code}) ${included?'de':'à'} mes vœux`;
       }
       function toggleSelectedWish(){
-        const code=state.selectedDeptCode;if(!code)return;
-        const lines=elements.souhaits.value.split(/\n/).filter(line=>line.trim());
-        if(lines.some(line=>findDeptCode(line)===code))elements.souhaits.value=lines.filter(line=>findDeptCode(line)!==code).join('\n');
-        else elements.souhaits.value=[...lines,`${code} ${deptDB[code].nom}`].join('\n');
+        const selected=selectedDirection();if(!selected)return;
+        const lines=elements.souhaits.value.split(/\n/).filter(line=>line.trim()),parse=raw=>SouhaitsDirections.parseLine(raw,deptDB,window.SOUHAITS_DIRECTION_CATALOG);
+        if(lines.some(line=>parse(line)?.key===selected.key))elements.souhaits.value=lines.filter(line=>parse(line)?.key!==selected.key).join('\n');
+        else elements.souhaits.value=[...lines,elements.directionChoice.value?SouhaitsDirections.format(selected):`${selected.code} ${deptDB[selected.code].nom}`].join('\n');
         updateWishCount();refreshSelectedWishButton();buildPredictions();
       }
-      function moveWish(code,direction){
+      function moveWish(key,direction){
         const lines=elements.souhaits.value.split('\n'),seen=new Set(),recognized=[];
-        lines.forEach((raw,index)=>{const current=findDeptCode(raw);if(current&&!seen.has(current)){seen.add(current);recognized.push({code:current,index});}});
-        const current=recognized.findIndex(row=>row.code===code),target=current+direction;
-        if(current<0||target<0||target>=recognized.length)return;
-        const i=recognized[current].index,j=recognized[target].index;[lines[i],lines[j]]=[lines[j],lines[i]];
-        elements.souhaits.value=lines.join('\n');updateWishCount();buildPredictions();
+        lines.forEach((raw,index)=>{const w=SouhaitsDirections.parseLine(raw,deptDB,window.SOUHAITS_DIRECTION_CATALOG);if(w&&!seen.has(w.key)){seen.add(w.key);recognized.push({key:w.key,index});}});
+        const current=recognized.findIndex(row=>row.key===key),target=current+direction;if(current<0||target<0||target>=recognized.length)return;
+        const i=recognized[current].index,j=recognized[target].index;[lines[i],lines[j]]=[lines[j],lines[i]];elements.souhaits.value=lines.join('\n');updateWishCount();buildPredictions();
       }
+
       function toggleBasemap(){
         if(!state.map||typeof L==='undefined')return;
         if(state.basemap){state.map.removeLayer(state.basemap);state.basemap=null;}
         if(elements.onlineBasemap.checked)state.basemap=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(state.map);
       }
+      function initHistory(){
+        const key='souhaits_history_v10',status=document.getElementById('historyImportStatus');
+        try{const saved=localStorage.getItem(key);if(saved)state.importedHistory=SouhaitsPrediction.validateRows(JSON.parse(saved),window.SOUHAITS_DIRECTION_CATALOG,deptDB);}catch(_error){state.importedHistory=[];status.textContent='Import ancien illisible : données embarquées conservées.';}
+        const data=window.SOUHAITS_HISTORY;
+        document.getElementById('historySummary').innerHTML=`<p><strong>${data.national.length} campagnes, ${data.staff.length} directions, ${data.departmentObservations.length} observations locales d’arrivées.</strong> Effectifs et premières affectations sont séparés. Les destinations exactes des autres candidats ne sont pas connues.</p><div class="historyTable"><table><thead><tr><th>Année</th><th>Affectés nationaux</th><th>Office</th><th>Priorités demandées</th></tr></thead><tbody>${data.national.map(r=>`<tr><td>${r.year}</td><td>${r.assigned??'Non documenté'}</td><td>${r.office}</td><td>${r.priorityRequests}</td></tr>`).join('')}</tbody></table></div><p class="fieldHint">2026 : 1152 = 169 Île-de-France + 983 province ; autres CNAL exclus. Les périmètres évoluent. Un effectif de direction n’est pas une offre pour un département. Seules les années antérieures à la campagne alimentent les références historiques.</p><details><summary>Consulter les sources</summary><ul class="historySources">${data.sources.map(source=>`<li><a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)}</a><small>${escapeHtml(source.scope)}</small></li>`).join('')}</ul><a href="./METHODOLOGY.md" target="_blank" rel="noopener noreferrer">Méthode, hypothèses et limites</a></details>`;
+        const update=()=>{status.textContent=`${state.importedHistory.length} observation(s) importée(s). Aucun envoi vers un serveur.`;};if(state.importedHistory.length)update();
+        document.getElementById('historyCSV').addEventListener('change',async event=>{
+          const file=event.target.files?.[0];if(!file)return;
+          try{if(file.size>2000000)throw new Error('Fichier trop volumineux (2 Mo maximum).');const parsed=SouhaitsPrediction.parseCSV(await file.text(),window.SOUHAITS_DIRECTION_CATALOG,deptDB);state.importedHistory=parsed;clearPredictions();try{localStorage.setItem(key,JSON.stringify(parsed));update();}catch(_error){status.textContent=`${parsed.length} observations chargées pour cette session ; stockage bloqué.`;}}catch(error){status.textContent='Import refusé : '+error.message;}event.target.value='';
+        });
+        document.getElementById('btnHistoryClear').addEventListener('click',()=>{state.importedHistory=[];try{localStorage.removeItem(key);}catch(_error){}clearPredictions();update();});
+        document.getElementById('btnHistoryTemplate').addEventListener('click',()=>{
+          const text='year,direction,department,offers,requests,assigned,lastRank,source,scope\n';
+          const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='souhaits-donnees-modele.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+          status.textContent='Modèle vide téléchargé. Exemples de codes : 440 (DR/DDFiP 44), D44 (DiSI Centre-Ouest), A15 (SDNC). Ajoutez uniquement des mesures sourcées de première affectation C administratif.';
+        });
+      }
+
       function initLocalFeatures(){
+        initHistory();
+        elements.directionChoice.addEventListener('input',refreshSelectedWishButton);
+        for(const d of window.SOUHAITS_DIRECTION_CATALOG.filter(d=>d.kind!=='territorial')){const o=document.createElement('option');o.value=d.id+' '+d.name;elements.directionOptions.append(o);}
         elements.onlineData.checked=false;elements.onlineBasemap.checked=false;
         elements.btnGenerate.addEventListener('click',generateTestWishes);
         elements.btnToggleWish.addEventListener('click',toggleSelectedWish);
         elements.souhaits.addEventListener('input',()=>{updateWishCount();refreshSelectedWishButton();clearPredictions();});
-        [elements.rang,elements.totalPostes,elements.pondChoix,elements.pondAttrac,elements.pondTension].forEach(input=>input.addEventListener('input',clearPredictions));
-        [elements.listeType,elements.prioHandicap,elements.prioConjoint,elements.csEnfant,elements.csSoutien,elements.modeLonguenesse].forEach(input=>input.addEventListener('change',clearPredictions));
+        [elements.rang,elements.totalPostes,elements.campaign,elements.mainSize,elements.internalSize,elements.priorityDept].forEach(input=>input.addEventListener('input',clearPredictions));
+        [elements.rankMode,elements.listeType,elements.prioHandicap,elements.prioConjoint,elements.csEnfant,elements.csSoutien,elements.modeLonguenesse].forEach(input=>input.addEventListener('change',clearPredictions));
         elements.onlineBasemap.addEventListener('change',toggleBasemap);
         elements.autoPhotos.addEventListener('change',()=>{state.photoController?.abort();if(state.selectedDeptCode){if(elements.autoPhotos.checked)loadDepartmentPhotos(state.selectedDeptCode,state.selectedDeptName,state.selectedDeptRequestId);else{elements.photoGrid.replaceChildren();elements.photoStatus.textContent='Photos automatiques désactivées.';elements.btnReloadPhotos.disabled=false;}}});
         elements.btnReloadPhotos.addEventListener('click',()=>{if(state.selectedDeptCode)loadDepartmentPhotos(state.selectedDeptCode,state.selectedDeptName,state.selectedDeptRequestId);});

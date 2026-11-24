@@ -7,9 +7,9 @@
   <meta name="description" content="Un espace clair pour préparer vos vœux DGFiP, explorer les départements et comparer vos simulations." />
   <title>Souhaits — Votre simulateur autonome</title>
   <link rel="manifest" href="./manifest.webmanifest" />
-  <script src="./assets/theme.js?v=9.0.1"></script>
+  <script src="./assets/theme.js?v=10.0.0"></script>
   <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="./assets/app.css?v=9.0.1" />
+  <link rel="stylesheet" href="./assets/app.css?v=10.0.0" />
 </head>
 <body>
   <a class="skipLink" href="#preparer">Aller au simulateur</a>
@@ -32,7 +32,7 @@
         </div>
       </section>
 
-      <aside class="notice"><span class="noticeIcon" aria-hidden="true">i</span><p><strong>Un éclairage, pas une décision officielle.</strong> Les scores, flux et postes sont des hypothèses de simulation. Vérifiez les règles et priorités auprès de la DGFiP.</p><span class="edition">ÉDITION 09</span></aside>
+      <aside class="notice"><span class="noticeIcon" aria-hidden="true">i</span><p><strong>Un éclairage, pas une décision officielle.</strong> Scénarios exploratoires fondés sur des données historiques sourcées. Les fourchettes décrivent la sensibilité aux hypothèses, pas une garantie individuelle.</p><span class="edition">ÉDITION 10</span></aside>
 
       <div class="workspaceHeading"><span>Votre espace de simulation</span><span class="workspaceHint"><span class="liveDot" aria-hidden="true"></span> 100 % local · Sans clé</span></div>
       <div class="grid">
@@ -44,21 +44,21 @@
               <div class="field"><label for="listeType">Type de liste</label><select id="listeType"><option value="LC">LC · Complémentaire</option><option value="LP">LP · Principale</option></select></div>
               <div class="field"><label for="rang">Votre rang</label><input id="rang" type="number" min="1" placeholder="Ex. 317" inputmode="numeric" /></div>
             </div>
-            <div class="field wishesField"><div class="fieldLabelRow"><label for="souhaits">Vos départements</label><span id="wishCount" class="countBadge">0 département</span></div>
-              <textarea id="souhaits" placeholder="44 Loire-Atlantique
-17 Charente-Maritime
-31 Haute-Garonne" spellcheck="false"></textarea>
-              <p class="fieldHint">Un code ou un nom par ligne. Le premier est votre premier vœu.</p>
+            <div class="field wishesField"><div class="fieldLabelRow"><label for="souhaits">Vos directions souhaitées</label><span id="wishCount" class="countBadge">0 vœu · 0 département</span></div>
+              <textarea id="souhaits" placeholder="44 DDFiP Loire-Atlantique
+44 DiSI Centre-Ouest
+33 SDNC" spellcheck="false"></textarea>
+              <p class="fieldHint">Un vœu = une direction + un département. Plusieurs directions du même département sont conservées. Un département seul désigne sa DR/DDFiP. Exemples : 44 DDFiP, 44 DiSI Centre-Ouest, 33 SDNC. Le premier est votre premier vœu.</p>
             </div>
             <details class="settingsGroup generatorGroup" id="testGenerator" open><summary><span>Générer des vœux de test</span><span class="summaryTag">Nouveau</span></summary><div class="settingsContent">
               <div class="row2"><div class="field"><label for="testCount">Nombre de vœux</label><input id="testCount" type="number" min="1" max="101" value="12" inputmode="numeric" /></div><div class="field"><label for="testScope">Zone</label><select id="testScope"><option value="metro">Métropole</option><option value="all">France entière</option><option value="overseas">Outre-mer</option></select></div></div>
               <div class="field"><label for="testProfile">Style de liste</label><select id="testProfile"><option value="balanced">Un peu de tout</option><option value="random">Aléatoire</option><option value="coast">Littoral</option><option value="mountain">Montagne</option><option value="budget">Budget logement modéré</option></select></div>
-              <button id="btnGenerate" type="button" class="generateButton">Générer et simuler <span aria-hidden="true">✦</span></button>
+              <label class="check"><input id="testSpecialized" type="checkbox" /><span>Inclure des directions spécialisées de démonstration</span></label><p class="fieldHint">Les exemples spécialisés ne présument pas de postes ouverts pour votre campagne.</p><button id="btnGenerate" type="button" class="generateButton">Générer et simuler <span aria-hidden="true">✦</span></button>
               <p class="fieldHint">Remplace les vœux affichés. Vos autres réglages sont conservés. Un rang de test est ajouté si le champ est vide.</p><div id="generatorStatus" class="fieldHint" role="status" aria-live="polite"></div>
             </div></details>
             <details class="settingsGroup" id="prioritySettings"><summary><span>Situations & priorités</span><span class="summaryTag">Facultatif</span></summary><div class="settingsContent">          <label class="check">
             <input id="prioHandicap" type="checkbox" />
-            <span>Priorité handicap / RQTH / CMI invalidité</span>
+            <span>Situation de handicap (validation administrative nécessaire)</span>
           </label>
           <label class="check">
             <input id="prioConjoint" type="checkbox" />
@@ -74,29 +74,19 @@
           </label>
           <label class="check">
             <input id="modeLonguenesse" type="checkbox" />
-            <span>Je veux aussi simuler la candidature Longuenesse (62)</span>
+            <span>Afficher le repère sur l’appel spécifique Longuenesse (hors calcul général)</span>
           </label>
 
-</div></details>
+<div class="field"><label for="priorityDept">Département concerné par la priorité</label><input id="priorityDept" list="deptOptions" placeholder="Ex. 44" /><p class="fieldHint">Aucun effet hors du département indiqué. Les situations et justificatifs restent à valider par l’administration.</p></div></div></details>
             <details class="settingsGroup"><summary><span>Hypothèses de calcul</span><span class="summaryTag">Avancé</span></summary><div class="settingsContent">
-              <div class="field"><label for="totalPostes">Base de postes simulés</label><input id="totalPostes" type="number" min="100" value="790" /></div>          <div class="row3">
-            <div class="field">
-              <label for="pondChoix">Poids ordre des vœux</label>
-              <input id="pondChoix" type="number" min="0" max="5" step="0.1" value="1.2" />
-            </div>
-            <div class="field">
-              <label for="pondAttrac">Poids attractivité</label>
-              <input id="pondAttrac" type="number" min="0" max="5" step="0.1" value="2.2" />
-            </div>
-            <div class="field">
-              <label for="pondTension">Poids tension</label>
-              <input id="pondTension" type="number" min="0" max="5" step="0.1" value="1.8" />
-            </div>
-          </div>
-
+<div class="row2"><div class="field"><label for="campaign">Campagne</label><input id="campaign" type="number" min="2024" max="2100" value="2027" /></div><div class="field"><label for="totalPostes">Volume national d’affectations simulé</label><input id="totalPostes" type="number" min="1" max="100000" value="1152" /></div></div>
+              <p class="fieldHint">1152 = affectations nationales recensées en 2026 hors autres CNAL ; hypothèse pour la prochaine campagne. Ce n’est pas le nombre de places du concours.</p>
+              <div class="field"><label for="rankMode">Nature de votre rang</label><select id="rankMode"><option value="external">Rang concours externe</option><option value="internal">Rang concours interne</option><option value="combined">Rang déjà interclassé</option></select></div>
+              <div class="row2"><div class="field"><label for="mainSize">Total des appelés en LP (interne + externe)</label><input id="mainSize" type="number" min="1" value="1051" /></div><div class="field"><label for="internalSize">Dont LP interne, si connu</label><input id="internalSize" type="number" min="0" placeholder="Inconnu : plage simulée" /></div></div>
+              <p class="fieldHint">LP avant LC. Interclassement interne/externe en LP ; en LC externe, le rang est ajouté après la LP. Le calcul suppose que vous êtes appelé, il ne prédit pas l’appel de la LC. Référentiel 2026 à vérifier pour votre campagne.</p>
 </div></details>
-            <div class="formActions"><button id="btnCalc" class="primaryButton" type="button">Calculer mes perspectives <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><div class="utilityActions"><button id="btnSave" type="button">Sauvegarder</button><button id="btnExport" type="button">Exporter CSV <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18m-7-7 7 7 7-7"/></svg></span></button><button id="btnReset" type="button">Effacer</button></div></div>
-            <div class="status" id="statusBox" role="status" aria-live="polite">Votre point de départ : un rang et quelques départements. Vous pouvez aussi essayer l’exemple.</div>
+            <details class="settingsGroup"><summary><span>Données & méthode</span><span class="summaryTag">Sources</span></summary><div class="settingsContent"><div id="historySummary"></div><div class="field"><label for="historyCSV">Importer postes, demandes ou derniers rangs (CSV)</label><input id="historyCSV" type="file" accept=".csv,text/csv" /></div><div class="utilityActions"><button id="btnHistoryTemplate" type="button">Modèle CSV</button><button id="btnHistoryClear" type="button">Effacer l’import</button></div><p class="fieldHint">Un enregistrement par année, direction et département. Périmètre C administratif, première affectation nationale. Les derniers rangs doivent être interclassés. Les données restent sur cet appareil.</p><div id="historyImportStatus" role="status" class="fieldHint"></div></div></details><div class="formActions"><button id="btnCalc" class="primaryButton" type="button">Calculer mes perspectives <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><div class="utilityActions"><button id="btnSave" type="button">Sauvegarder</button><button id="btnExport" type="button">Exporter CSV <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18m-7-7 7 7 7-7"/></svg></span></button><button id="btnReset" type="button">Effacer</button></div></div>
+            <div class="status" id="statusBox" role="status" aria-live="polite">Votre point de départ : un rang et quelques directions. Vous pouvez aussi essayer l’exemple.</div>
           </div>
           <div class="sidebarFooter"><span aria-hidden="true">◈</span> Calculs et fiches disponibles sans clé ni IA.</div>
         </section>
@@ -105,16 +95,16 @@
           <div class="panelHeader"><div><span class="eyebrow">02 / LE CHAMP DES POSSIBLES</span><h2 id="mapTitle">Explorez la carte</h2></div><button class="btnFullscreen" type="button" data-fullscreen-target="mapPanel" aria-label="Agrandir la carte">Agrandir</button></div>
           <div class="deptSearch"><label for="deptSearch" class="searchLabel"><span aria-hidden="true">⌕</span><span class="srOnly">Ouvrir un département</span></label><input id="deptSearch" list="deptOptions" placeholder="Un département, un code…" /><datalist id="deptOptions"></datalist><button id="btnOpenDept" type="button" class="searchButton">Voir <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><select id="mapRegion" aria-label="Zone de la carte"><option value="metro">Métropole</option><option value="antilles">Antilles</option><option value="guyane">Guyane</option><option value="reunion">La Réunion</option><option value="mayotte">Mayotte</option></select></div>
           <div class="mapWrap"><div id="map"></div><div class="mapOverlay" id="mapOverlay"><span aria-hidden="true">↖</span> Sélectionnez un département pour découvrir son profil.</div></div>
-          <div class="mapFooter"><div class="mapActions"><button id="btnToggleWish" type="button" class="addWishButton" disabled>Choisissez un département</button><label class="mapOption"><input id="onlineBasemap" type="checkbox" /> Fond de carte en ligne</label></div><div class="mapControls"><button id="btnHeatmap" class="ghost" type="button">Carte des scores : ON</button><div class="legend"><span><i class="dot neutral"></i> Hors liste</span><span><i class="dot wished"></i> Vos vœux</span><span><i class="dot selected"></i> Sélection</span></div></div><div id="mapStatus" class="mapStatus" role="status">Chargement de la carte…</div></div>
+          <div class="mapFooter"><div class="directionPicker"><label for="directionChoice">Direction du vœu dans ce département</label><input id="directionChoice" list="directionOptions" placeholder="DR/DDFiP (par défaut), DiSI, SDNC…" /><datalist id="directionOptions"></datalist><span class="fieldHint">Choix de vœu ; les implantations et ouvertures de postes sont à vérifier pour la campagne.</span></div><div class="mapActions"><button id="btnToggleWish" type="button" class="addWishButton" disabled>Choisissez un département</button><label class="mapOption"><input id="onlineBasemap" type="checkbox" /> Fond de carte en ligne</label></div><div class="mapControls"><button id="btnHeatmap" class="ghost" type="button">Carte des scores : ON</button><div class="legend"><span><i class="dot neutral"></i> Hors liste</span><span><i class="dot wished"></i> Vos vœux</span><span><i class="dot selected"></i> Sélection</span></div></div><div id="mapStatus" class="mapStatus" role="status">Chargement de la carte…</div></div>
         </section>
 
         <section class="panel dgfipPanel" id="resultats" aria-labelledby="resultsTitle">
           <div class="panelHeader"><div><span class="eyebrow">03 / VOTRE PROJECTION</span><h2 id="resultsTitle">Les pistes se dessinent.</h2></div><span class="badge" id="selectedDeptBadge">Aucun département</span></div>
           <div class="panelBody"><div class="scenarioSummary" id="scenarioSummary" role="status" aria-live="polite">Votre synthèse apparaîtra après le calcul, sans service externe.</div><div class="badges" id="badges"></div>
-            <div class="kpis"><div class="kpi"><div class="t">Part cumulée du top 3</div><div class="v" id="kpiTop3">—</div><span class="kpiNote">Dans cette simulation</span></div><div class="kpi"><div class="t">Risque d’affectation d’office</div><div class="v" id="kpiOffice">—</div><span class="kpiNote">Hypothèse résiduelle</span></div><div class="kpi"><div class="t">Force du rang</div><div class="v" id="kpiRank">—</div><span class="kpiNote">Indice du simulateur</span></div><div class="kpi"><div class="t">Score du département</div><div class="v" id="kpiDeptScore">—</div><span class="kpiNote">Votre sélection actuelle</span></div></div>
-            <div class="sectionTitleRow"><h3>Vos trois premières pistes</h3><span>Classement par part simulée</span></div><div class="top3" id="top3"></div>
+            <div class="kpis"><div class="kpi"><div class="t">Part cumulée du top 3</div><div class="v" id="kpiTop3">—</div><span class="kpiNote">Dans cette simulation</span></div><div class="kpi"><div class="t">Hors de cette liste</div><div class="v" id="kpiOffice">—</div><span class="kpiNote">Part résiduelle simulée</span></div><div class="kpi"><div class="t">Rang utile simulé</div><div class="v" id="kpiRank">—</div><span class="kpiNote">Après interclassement et désistements</span></div><div class="kpi"><div class="t">Part du département</div><div class="v" id="kpiDeptScore">—</div><span class="kpiNote">Votre sélection actuelle</span></div></div>
+            <div class="sectionTitleRow"><h3>Vos trois premières pistes</h3><span>Directions classées par part simulée</span></div><div class="top3" id="top3"></div>
             <details class="resultsDetails"><summary>Tous les vœux, dans le détail <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></summary><div id="allResults"></div></details>
-            <div class="analysisGrid"><div class="radarBox"><div class="subTitle">Le profil en un regard</div><canvas id="radarCanvas" height="220" aria-label="Radar indicatif du département"></canvas></div><div class="departmentReading"><div class="subTitle">Comprendre cette projection</div><div class="bigText" id="dgfipDeptInfo">Sélectionnez un département pour comprendre sa place dans vos vœux.</div></div></div>
+            <div class="analysisGrid"><div class="radarBox"><div class="subTitle">Sensibilité du département</div><canvas id="radarCanvas" height="220" aria-label="Comparaison des trois scénarios du département"></canvas></div><div class="departmentReading"><div class="subTitle">Comprendre cette projection</div><div class="bigText" id="dgfipDeptInfo">Sélectionnez un département pour comprendre sa place dans vos vœux.</div></div></div>
           </div>
         </section>
 
@@ -173,9 +163,13 @@
   <nav class="mobileNav" aria-label="Accès rapide"><a href="#preparer"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span> Mon projet</a><a href="#explorer"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/></svg></span> La carte</a><a href="#resultats"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span> Résultats</a></nav>
   <script src="./assets/vendor/leaflet/leaflet.js"></script>
   <script src="./assets/departements.js"></script>
-  <script src="./assets/territoires.js?v=9.0.1"></script>
-  <script src="./assets/local-tools.js?v=9.0.1"></script>
-  <script src="./assets/photos.js?v=9.0.1"></script>
-  <script src="./assets/app.js?v=9.0.1"></script>
+  <script src="./assets/territoires.js?v=10.0.0"></script>
+  <script src="./assets/local-tools.js?v=10.0.0"></script>
+  <script src="./assets/photos.js?v=10.0.0"></script>
+  <script src="./assets/history.js?v=10.0.0"></script>
+  <script src="./assets/direction-catalog.js?v=10.0.0"></script>
+  <script src="./assets/directions.js?v=10.0.0"></script>
+  <script src="./assets/prediction.js?v=10.0.0"></script>
+  <script src="./assets/app.js?v=10.0.0"></script>
 </body>
 </html>
