@@ -1719,7 +1719,7 @@
         handleDeptClick(code,deptDB[code].nom);
         elements.mapRegion.value=code==='971'||code==='972'?'antilles':code==='973'?'guyane':code==='974'?'reunion':code==='976'?'mayotte':'metro';
         const layer = state.deptLayersByCode[code];
-        if(state.map && layer) state.map.fitBounds(layer.getBounds(),{padding:[25,25],maxZoom:9});
+        if(state.map && layer){state.map.stop();state.map.fitBounds(layer.getBounds(),{padding:[25,25],maxZoom:9,animate:false});}
       }
       function updateWishCount(){
         const codes=new Set(elements.souhaits.value.split(/\n+/).map(findDeptCode).filter(Boolean));
@@ -1813,7 +1813,7 @@
       elements.btnExport.addEventListener('click',exportResults);
       elements.mapRegion.addEventListener('change', () => {
         const regions = {metro:[[41,-5.8],[51.7,9.8]],antilles:[[14,-62],[17,-59]],guyane:[[2,-55],[6,-51]],reunion:[[-21.5,55.1],[-20.8,56]],mayotte:[[-13.1,44.9],[-12.5,45.5]]};
-        if(state.map) state.map.fitBounds(regions[elements.mapRegion.value],{padding:[15,15]});
+        if(state.map){state.map.stop();state.map.fitBounds(regions[elements.mapRegion.value],{padding:[15,15],animate:false});}
       });
 
       elements.btnCalc.addEventListener("click", buildPredictions);
