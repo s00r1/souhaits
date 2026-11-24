@@ -8,14 +8,12 @@
         fullscreenButtons: Array.from(document.querySelectorAll(".btnFullscreen")),
         listeType: document.getElementById("listeType"),
         rang: document.getElementById("rang"),
-        groqModel: document.getElementById("groqModel"),
-        groqApiKey: document.getElementById("groqApiKey"),
-        rememberKey: document.getElementById("rememberKey"),
-        btnScanModels: document.getElementById("btnScanModels"),
-        btnTestModel: document.getElementById("btnTestModel"),
-        groqStatus: document.getElementById("groqStatus"),
-        btnAnalyze: document.getElementById("btnAnalyze"),
-        aiAnalysis: document.getElementById("aiAnalysis"),
+        themeSelect: document.getElementById("themeSelect"),
+        testCount: document.getElementById("testCount"), testScope: document.getElementById("testScope"), testProfile: document.getElementById("testProfile"),
+        btnGenerate: document.getElementById("btnGenerate"), generatorStatus: document.getElementById("generatorStatus"),
+        wishCount: document.getElementById("wishCount"), localAdvice: document.getElementById("localAdvice"),
+        scenarioSummary: document.getElementById("scenarioSummary"), btnToggleWish: document.getElementById("btnToggleWish"),
+        onlineData: document.getElementById("onlineData"), onlineBasemap: document.getElementById("onlineBasemap"),
         infoSources: document.getElementById("infoSources"),
         mapStatus: document.getElementById("mapStatus"),
         deptSearch: document.getElementById("deptSearch"),
@@ -67,14 +65,7 @@
       };
 
       const state = {
-        models: [],
-        modelKey: null,
-        preferredModel: '',
-        modelScanController: null,
-        modelTestController: null,
-        analysisController: null,
-        modelGeneration: 0,
-        analysisGeneration: 0,
+        basemap: null,
         map: null,
         geojsonLayer: null,
         deptLabelMarkers: [],
@@ -96,32 +87,6 @@
         },
         realDataCache: {}
       };
-
-      const SEA_POINTS = [
-        { name:"Dunkerque", lat:51.0344, lng:2.3768 },
-        { name:"Le Havre", lat:49.4944, lng:0.1079 },
-        { name:"Brest", lat:48.3904, lng:-4.4861 },
-        { name:"Lorient", lat:47.7483, lng:-3.3702 },
-        { name:"La Rochelle", lat:46.1603, lng:-1.1511 },
-        { name:"Bordeaux Lacanau", lat:45.0051, lng:-1.2011 },
-        { name:"Biarritz", lat:43.4832, lng:-1.5586 },
-        { name:"Sète", lat:43.4028, lng:3.6928 },
-        { name:"Marseille", lat:43.2965, lng:5.3698 },
-        { name:"Nice", lat:43.7102, lng:7.2620 }
-      ];
-
-      const MOUNTAIN_POINTS = [
-        { name:"Chamonix", lat:45.9237, lng:6.8694 },
-        { name:"Grenoble", lat:45.1885, lng:5.7245 },
-        { name:"Briançon", lat:44.8992, lng:6.6421 },
-        { name:"Luchon", lat:42.7908, lng:0.5947 },
-        { name:"Foix", lat:42.9654, lng:1.6072 },
-        { name:"Aurillac", lat:44.9267, lng:2.4413 },
-        { name:"Le Puy-en-Velay", lat:45.0437, lng:3.8854 },
-        { name:"Gap", lat:44.5596, lng:6.0781 },
-        { name:"Annecy", lat:45.8992, lng:6.1294 },
-        { name:"Saint-Dié-des-Vosges", lat:48.2884, lng:6.9490 }
-      ];
 
       const HEATMAP_COLORS = [
         "#e4d5ad", "#d8d3a1", "#c8ce96", "#b4c58b", "#9dbd84",
@@ -617,49 +582,7 @@
         const house3p = Math.round(90000 + (housingScore * 220000) + (attr * 120000) + (quality * 60000));
         const house4p = Math.round(house3p * 1.22);
 
-        const summer = {
-          tempMax: Math.round(24 + (attr * 5) + (meta.sea ? -1 : 1)),
-          nights: Math.round(14 + (attr * 4) + (meta.sea ? 1 : 0))
-        };
-
-        const winter = {
-          tempMin: Math.round(1 + (quality * 4) + (meta.mountain ? -4 : 1)),
-          rains: Math.round(50 + (tension * 22) + (meta.sea ? 15 : 0) + (meta.mountain ? 10 : 0))
-        };
-
-        const seaDistance = meta.sea ? 12 : Math.round(110 + ((1 - attr) * 180));
-        const mountainDistance = meta.mountain ? 18 : Math.round(120 + ((1 - quality) * 210));
-        const density = Math.max(25, Math.round(pop / (4200 - (attr * 1800))));
-
-        return {
-          rentF2,
-          house3p,
-          house4p,
-          summer,
-          winter,
-          seaDistance,
-          mountainDistance,
-          density
-        };
-      }
-
-      function cityProfile(meta){
-        const cities = (meta.bigCities || []).slice(0, 6);
-        const basePop = parsePopulation(meta.population || "300k");
-        const ratios = [0.24, 0.14, 0.10, 0.07, 0.05, 0.04];
-
-        return cities.map((city, i) => {
-          const estPop = Math.max(22000, Math.round(basePop * (ratios[i] || 0.03)));
-          const citySea = meta.sea ? Math.max(4, 18 + i * 12) : Math.round(70 + i * 38 + ((1 - (meta.attractivite || 0.5)) * 90));
-          const cityMountain = meta.mountain ? Math.max(5, 22 + i * 14) : Math.round(95 + i * 32 + ((1 - (meta.quality || 0.5)) * 110));
-          return {
-            name: city,
-            estPop,
-            importance: cityImportance(estPop),
-            distanceSeaKm: citySea,
-            distanceMountainKm: cityMountain
-          };
-        });
+        return {rentF2,house3p,house4p};
       }
 
       function formatEUR(v){
@@ -693,31 +616,6 @@
           if(!res.ok) throw new Error(`HTTP ${res.status}`);
           return await res.json();
         } finally { clearTimeout(timer); }
-      }
-
-      function formatDeptCodeForApi(code){
-        if(/^\d$/.test(code)) return `0${code}`;
-        return String(code).toUpperCase();
-      }
-
-      async function fetchDepartmentFromApi(code){
-        const c = formatDeptCodeForApi(code);
-        const base = `${GEO_API_BASE}/departements/${encodeURIComponent(c)}`;
-        const [dept, communes] = await Promise.all([
-          fetchJson(`${base}?fields=nom,code,codeRegion,region,centre`).catch(()=>null),
-          fetchJson(`${base}/communes?fields=nom,population,centre&format=json`).catch(()=>[])
-        ]);
-
-        const sortedCommunes = Array.isArray(communes)
-          ? communes
-              .filter(c => c?.nom && Number.isFinite(Number(c?.population)))
-              .sort((a,b) => Number(b.population) - Number(a.population))
-          : [];
-
-        return {
-          dept: dept || null,
-          communes: sortedCommunes
-        };
       }
 
       async function fetchWeatherByCoords(lat, lng){
@@ -754,21 +652,14 @@
 
       async function buildRealDepartmentData(code, name){
         if(state.realDataCache[code]) return state.realDataCache[code];
-        const [apiData, wikiDept] = await Promise.all([
-          fetchDepartmentFromApi(code),
-          fetchWikipediaSummary(`${name} (département)`).catch(() => null)
+        const local = window.SOUHAITS_TERRITORIES?.departments?.[code];
+        const center = firstValidCoord(local?.communes?.[0]?.centre, fallbackCenterFromLayer(code));
+        const [weather,wikiDept] = await Promise.all([
+          center ? fetchWeatherByCoords(center.lat,center.lng).catch(() => null) : null,
+          fetchWikipediaSummary(local?.nom || name).catch(() => null)
         ]);
-        const topCommunes = apiData.communes.slice(0, 6);
-        const center = firstValidCoord(topCommunes[0]?.centre, apiData.dept?.centre, fallbackCenterFromLayer(code));
-        const real = {
-          name:apiData.dept?.nom || name, code, region:apiData.dept?.region?.nom || null,
-          center, communes:topCommunes,
-          population:apiData.communes.reduce((sum,c) => sum + Number(c.population || 0), 0),
-          weather:center ? await fetchWeatherByCoords(center.lat, center.lng).catch(() => null) : null,
-          wikiDept
-        };
-        // Do not cache a complete outage; a later selection can retry.
-        if(topCommunes.length || wikiDept || real.weather) state.realDataCache[code] = real;
+        const real={weather,wikiDept};
+        if(weather || wikiDept) state.realDataCache[code]=real;
         return real;
       }
 
@@ -1011,7 +902,6 @@
         return {
           listeType: elements.listeType.value,
           rang: elements.rang.value,
-          groqModel: elements.groqModel.value,
           totalPostes: elements.totalPostes.value,
           prioHandicap: elements.prioHandicap.checked,
           prioConjoint: elements.prioConjoint.checked,
@@ -1029,9 +919,6 @@
         if(!data) return;
         elements.listeType.value = data.listeType || "LC";
         elements.rang.value = data.rang || "";
-        state.preferredModel = data.groqModel || "";
-        if(state.models.some(m => m.id === state.preferredModel)) elements.groqModel.value = state.preferredModel;
-        if(typeof data.groqApiKey === "string") elements.groqApiKey.value = data.groqApiKey;
         elements.totalPostes.value = data.totalPostes || "790";
         elements.prioHandicap.checked = !!data.prioHandicap;
         elements.prioConjoint.checked = !!data.prioConjoint;
@@ -1041,29 +928,23 @@
         elements.pondChoix.value = data.pondChoix ?? "1.2";
         elements.pondAttrac.value = data.pondAttrac ?? "2.2";
         elements.pondTension.value = data.pondTension ?? "1.8";
-        elements.souhaits.value = data.souhaits || "";
+        elements.souhaits.value = typeof data.souhaits === "string" ? data.souhaits : "";
+        updateWishCount();
       }
 
       function saveLocal(){
-        try {
-          const data = getFormData();
-          if(elements.rememberKey.checked){ data.groqApiKey = elements.groqApiKey.value.trim(); data.rememberGroqKey = true; }
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          setStatus("Réglages sauvegardés sur cet appareil." + (elements.rememberKey.checked ? " Clé incluse." : " Clé non enregistrée."));
-        } catch (_error) { setStatus("Sauvegarde impossible : le navigateur bloque le stockage local."); }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormData())); setStatus("Projet sauvegardé sur cet appareil, sans aucune clé."); }
+        catch (_error) { setStatus("Sauvegarde impossible : le navigateur bloque le stockage local."); }
       }
-
       function loadLocal(){
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if(!raw) return;
-          const data = JSON.parse(raw);
+          const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;
+          const data=JSON.parse(raw);if(!data || typeof data!=="object" || Array.isArray(data))throw new Error("invalid");
           setFormData(data);
-          // Migrate old plaintext saved keys into memory only. V7 persistence needs explicit opt-in.
-          if(data.groqApiKey && data.rememberGroqKey === true) elements.rememberKey.checked = true;
-          else if(data.groqApiKey){ delete data.groqApiKey; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-          setStatus("Réglages précédents rechargés.");
-        } catch (_error) { setStatus("Ancienne sauvegarde illisible ou stockage indisponible. Tu peux continuer."); }
+          // Migrate the project fields only and erase any credentials saved by older versions.
+          localStorage.setItem(STORAGE_KEY,JSON.stringify(getFormData()));
+          setStatus("Projet rechargé. Les anciennes données de connexion ont été supprimées.");
+        } catch (_error) { setStatus("Ancienne sauvegarde illisible ou stockage indisponible. Vous pouvez continuer."); }
       }
 
       function computeConditionalChance({f, meta, ordre, totalWishes, rankStrength}){
@@ -1136,7 +1017,6 @@
       }
 
       function buildPredictions(){
-        cancelAnalysis();
         const f = getFormData();
         const wishes = parseSouhaits(f.souhaits);
         const rang = Number(f.rang || 0);
@@ -1258,7 +1138,12 @@
           drawRadar(null);
         }
 
-        setStatus(`Simulation V8 : ${wishes.length} départements analysés. Risque d’office simulé : ${pct(officeRisk)}. ${state.inputWarnings || ""}`);
+        updateWishCount();
+        setStatus(`Simulation V9 : ${wishes.length} départements analysés. Risque d’office simulé : ${pct(officeRisk)}. ${state.inputWarnings || ""}`);
+        updateScenarioSummary();
+        refreshSelectedWishButton();
+        if(state.selectedDeptCode) updateGlobalInfo(state.selectedDeptCode,state.selectedDeptName,getPredictionByCode(state.selectedDeptCode),state.selectedDeptRequestId,state.realDataCache[state.selectedDeptCode],false);
+        animateResults();
         return aggregatedResults;
       }
 
@@ -1407,9 +1292,10 @@
         const pred = getPredictionByCode(code);
         const isSelected = state.selectedDeptCode === code;
 
-        let fill = "#d1ddc9";
+        const dark=document.documentElement.dataset.theme==="dark";
+        let fill = dark ? "#29473b" : "#cbdcc5";
         let weight = 1;
-        let color = "#7e9578";
+        let color = dark ? "#6b9277" : "#78946f";
         let fillOpacity = 0.42;
 
         if(state.heatmapEnabled){
@@ -1434,7 +1320,7 @@
         }
 
         if(isSelected){
-          color = "#0e503b";
+          color = dark ? "#d4efb6" : "#075539";
           weight = 2.2;
           fillOpacity = clamp(fillOpacity + 0.1, 0.50, 0.90);
         }
@@ -1463,7 +1349,6 @@
       }
 
       function handleDeptClick(code, name){
-        cancelAnalysis();
         state.selectedDeptCode = code;
         state.selectedDeptName = name;
         state.selectedDeptRequestId += 1;
@@ -1473,118 +1358,95 @@
         updateDgfipPanelForDept(code, name, pred);
         drawRadar(pred);
         updateGlobalInfo(code, name, pred, requestId);
-        syncAnalyzeButton();
+        refreshSelectedWishButton();
         updateMapStyling();
 
         elements.mapOverlay.textContent = `${code} · ${name}. Retrouvez sa projection et son cadre de vie ci-dessous.`;
       }
 
       function buildSortedMetrics(meta, pred, metrics, cityData){
-        const list = [
-          { label:"Accessibilité logement", value: Math.round((1 - housingToScore(meta.housing || "€€")) * 100), unit:"/100", desc:"plus haut = budget plus facile" },
-          { label:"Attractivité globale", value: Math.round((meta.attractivite || 0.5) * 100), unit:"/100", desc:"cadre, emploi, dynamisme" },
-          { label:"Capacité d'accueil DGFiP", value: Math.round((pred?.capacity ?? capacityIndex(meta, meta.code || "")) * 100), unit:"/100", desc:"estimation locale" },
-          { label:"Distance médiane mer", value: metrics.seaDistance, unit:" km", desc:"ordre de grandeur" },
-          { label:"Distance médiane montagne", value: metrics.mountainDistance, unit:" km", desc:"ordre de grandeur" },
-          { label:"Densité estimée", value: metrics.density, unit:" hab/km²", desc:"approximation" },
-          { label:"Top ville (population)", value: cityData[0]?.estPop || 0, unit:" hab", desc:cityData[0]?.name || "—" }
+        const geography=window.SOUHAITS_TERRITORIES?.departments?.[meta.code];
+        return [
+          {label:"Population communale agrégée",value:geography?.population||0,unit:" hab",desc:"Photographie locale de l’API géographique"},
+          {label:"Densité calculée",value:geography?.density||0,unit:" hab/km²",desc:"Surface approchée issue des contours simplifiés"},
+          {label:"Communes dans la base",value:geography?.communesCount||0,unit:"",desc:"API Découpage administratif"},
+          {label:"Accessibilité logement",value:Math.round((1-housingToScore(meta.housing||"€€"))*100),unit:"/100",desc:"Hypothèse non officielle du simulateur"},
+          {label:"Capacité d’accueil DGFiP",value:Math.round((pred?.capacity??capacityIndex(meta,meta.code))*100),unit:"/100",desc:"Hypothèse locale, pas une liste de postes"},
+          {label:"Ville la plus peuplée",value:cityData[0]?.estPop||0,unit:" hab",desc:cityData[0]?.name||"Non renseigné"}
         ];
-
-        return list.sort((a,b) => b.value - a.value);
       }
 
       function updateCityMarker(city){
         if(state.cityMarker && state.map){ state.map.removeLayer(state.cityMarker); state.cityMarker = null; }
         if(!state.map || !city?.coordinates || typeof L === "undefined") return;
         state.cityMarker = L.circleMarker([city.coordinates.lat, city.coordinates.lng], {
-          radius:8, color:"#6ef0c2", weight:2, fillColor:"#63a4ff", fillOpacity:.9
+          radius:7, color:"#e5f1cc", weight:2, fillColor:"#177c62", fillOpacity:.95
         }).addTo(state.map);
         const label = document.createElement("span"); label.textContent = city.name;
         state.cityMarker.bindPopup(label).openPopup();
       }
 
       function renderCityChips(cityData){
-        elements.cityChips.innerHTML = cityData.map((city, idx) => `
-          <button class="cityChip ${idx === 0 ? "active" : ""}" data-city="${escapeHtml(city.name)}">${escapeHtml(city.name)} · ${city.importance}</button>
-        `).join("");
-
-        elements.cityChips.querySelectorAll(".cityChip").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const target = cityData.find(c => c.name === btn.dataset.city);
-            if(!target) return;
-
-            state.selectedCityName = target.name;
-            elements.cityChips.querySelectorAll(".cityChip").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            elements.cityMeta.textContent = `${target.name} · ${target.importance} · mer ${target.distanceSeaKm} km · montagne ${target.distanceMountainKm} km`;
-            elements.cityHighlight.innerHTML = `
-              <h4>Ville mise en évidence : ${escapeHtml(target.name)}</h4>
-              <div class="small muted">Population ${target.estPop.toLocaleString("fr-FR")} hab · Distances indicatives du département : mer ~${target.distanceSeaKm} km, montagne ~${target.distanceMountainKm} km.</div>
-            `;
-            updateCityMarker(target);
-          });
+        elements.cityChips.replaceChildren();
+        cityData.forEach((city,idx)=>{
+          const button=document.createElement("button");button.type="button";button.className=`cityChip ${idx===0?"active":""}`;
+          button.textContent=city.name;button.addEventListener("click",()=>{
+            elements.cityChips.querySelectorAll("button").forEach(b=>b.classList.remove("active"));button.classList.add("active");
+            state.selectedCityName=city.name;updateCityHighlight(city);updateCityMarker(city);
+          });elements.cityChips.append(button);
         });
       }
-
-      function updateGlobalInfo(code, name, pred, requestId, realData = null, refresh = true){
-        const isObsolete = () => requestId !== state.selectedDeptRequestId || state.selectedDeptCode !== code;
-        if(isObsolete()) return;
-        const meta = { ...(deptDB[code] || {}), code };
-        const metrics = estimateDepartmentMetrics(meta);
-        const cityData = realData?.communes?.length ? realData.communes.map(c => ({
-          name:c.nom, estPop:Number(c.population || 0), importance:cityImportance(Number(c.population || 0)),
-          coordinates:firstValidCoord(c.centre), distanceSeaKm:metrics.seaDistance, distanceMountainKm:metrics.mountainDistance
-        })) : cityProfile(meta);
-        state.selectedCityName = cityData[0]?.name || null;
-        elements.infoCities.textContent = cityData.map(c => c.name).join(", ") || "Non renseigné";
-        elements.infoPopulation.textContent = realData?.population > 0
-          ? `${realData.population.toLocaleString("fr-FR")} habitants (somme des populations communales de l’API géographique)${realData.region ? ` · ${realData.region}` : ""}`
-          : `${meta.population || "Non renseigné"} · estimation locale`;
-        elements.infoNature.textContent = `Mer : ~${metrics.seaDistance} km · montagne : ~${metrics.mountainDistance} km (ordres de grandeur locaux, sans calcul routier)`;
-        elements.infoHousing.textContent = `Niveau logement ${meta.housing || "—"} · tension indicative ${Math.round((meta.tension || .5)*100)}/100`;
-        elements.infoRentF2.textContent = `${formatEUR(metrics.rentF2)} / mois · estimation non sourcée`;
-        elements.infoHousePrice.textContent = `3p : ${formatEUR(metrics.house3p)} · 4p : ${formatEUR(metrics.house4p)} · estimations non sourcées`;
-        const daily = realData?.weather?.daily;
-        elements.infoClimate.textContent = daily?.temperature_2m_max?.length
-          ? `Prévisions 7 jours à proximité de ${cityData[0]?.name || name} : max ${Math.round(Math.max(...daily.temperature_2m_max))}°C · min ${Math.round(Math.min(...daily.temperature_2m_min))}°C · Open-Meteo`
-          : `Climat indicatif local : été ${metrics.summer.tempMax}°C max · hiver ${metrics.winter.tempMin}°C min`;
-        renderCityChips(cityData);
-        updateCityMarker(cityData[0]);
-        elements.cityMeta.textContent = cityData.length ? `${cityData[0].name} · ${realData?.communes?.length ? "population communale API" : "profil local indicatif"}. Distances estimées à l’échelle départementale.` : "Aucune ville renseignée.";
+      function updateCityHighlight(city){
+        elements.cityMeta.textContent=city?`${city.name} · ${city.estPop.toLocaleString("fr-FR")} habitants · coordonnées réelles embarquées.`:"Aucune ville renseignée.";
         elements.cityHighlight.replaceChildren();
-        const title = document.createElement("h4"); title.textContent = cityData[0]?.name || "Ville non renseignée";
-        const detail = document.createElement("div"); detail.className = "small muted";
-        detail.textContent = cityData[0]?.coordinates ? "Position réelle fournie par l’API géographique." : "Position non disponible : aucun repère approximatif ajouté sur la carte.";
-        elements.cityHighlight.append(title, detail);
-        elements.infoSortedMetrics.innerHTML = buildSortedMetrics(meta, pred, metrics, cityData).map(m =>
-          `<li><span><strong>${escapeHtml(m.label)}</strong><br><span class="muted">${escapeHtml(m.desc)}</span></span><span>${safeNum(m.value,0).toLocaleString("fr-FR")}${m.unit}</span></li>`).join("");
-        elements.infoSummary.textContent = realData?.wikiDept?.extract || `${code} ${name}. ${meta.bigCities?.length ? `Villes de référence : ${meta.bigCities.join(", ")}.` : ""} Les prix et distances du profil local sont des hypothèses à vérifier.`;
-        elements.infoSources.textContent = realData
-          ? `Sources disponibles : ${[realData.communes?.length ? "API géographique de l’État" : null, realData.weather ? "Open-Meteo (prévisions)" : null, realData.wikiDept ? "Wikipédia (résumé)" : null].filter(Boolean).join(" · ") || "aucune API externe : profil local affiché"}. Prix, distances et simulation : hypothèses locales.`
-          : "Profil local affiché immédiatement. Recherche des données publiques en cours…";
-        if(realData?.wikiDept){
-          const attribution = document.createElement("a");
-          attribution.href = `https://fr.wikipedia.org/wiki/${encodeURIComponent(realData.wikiDept.title || name)}`;
-          attribution.textContent = " Lire le résumé original sur Wikipédia (CC BY-SA).";
-          attribution.target = "_blank"; attribution.rel = "noopener noreferrer";
-          attribution.style.color = "var(--accent)";
-          elements.infoSources.append(attribution);
+        const title=document.createElement("h4");title.textContent=city?.name||"Votre point de repère";
+        const detail=document.createElement("div");detail.className="small muted";detail.textContent=city?`${city.estPop.toLocaleString("fr-FR")} habitants dans la base communale. Le repère utilise les coordonnées de l’API géographique.`:"Choisissez un département sur la carte.";
+        elements.cityHighlight.append(title,detail);
+      }
+      function localClimate(code,meta){
+        if(["971","972","976"].includes(code))return "Climat tropical : variations saisonnières des pluies. Consultez les normales et prévisions locales pour préparer votre installation.";
+        if(code==="973")return "Climat équatorial humide : vérifiez la saisonnalité des pluies et les conditions locales.";
+        if(code==="974")return "Climat tropical, fortement contrasté selon l’altitude et l’exposition. Comparez les conditions de la commune choisie.";
+        if(meta.mountain)return "En zone de relief, l’altitude et l’exposition changent fortement les conditions. Vérifiez la commune et les trajets hivernaux.";
+        if(meta.sea)return "Le littoral et l’intérieur peuvent avoir des conditions différentes. Comparez les normales climatiques des communes envisagées.";
+        return "Comparez les normales climatiques de la commune envisagée. Aucun chiffre de température n’est inventé par le simulateur.";
+      }
+      function updateGlobalInfo(code,name,pred,requestId,realData=null,refresh=true){
+        const isObsolete=()=>requestId!==state.selectedDeptRequestId||state.selectedDeptCode!==code||!elements.onlineData.checked;
+        if(requestId!==state.selectedDeptRequestId||state.selectedDeptCode!==code)return;
+        const meta={...(deptDB[code]||{}),code};const metrics=estimateDepartmentMetrics(meta);
+        const local=window.SOUHAITS_TERRITORIES?.departments?.[code];
+        const cityData=(local?.communes||[]).map(c=>({name:c.nom,estPop:Number(c.population||0),importance:cityImportance(Number(c.population||0)),coordinates:firstValidCoord(c.centre)}));
+        elements.infoCities.textContent=cityData.map(c=>c.name).join(", ")||"Données locales indisponibles";
+        elements.infoPopulation.textContent=local?`${local.population.toLocaleString("fr-FR")} habitants · ${local.region} · ${local.communesCount} communes dans la base`:`${meta.population||"Non renseigné"} · estimation historique`;
+        const features=[meta.sea?"Littoral identifié dans le profil local":null,meta.mountain?"Zones de relief identifiées dans le profil local":null].filter(Boolean);
+        elements.infoNature.textContent=features.join(" · ")||"Comparez les communes et les distances à partir de la carte. Aucun trajet routier n’est calculé.";
+        elements.infoHousing.textContent=`Niveau logement ${meta.housing||"—"} · tension indicative ${Math.round((meta.tension||.5)*100)}/100 · hypothèses locales`;
+        elements.infoRentF2.textContent=`${formatEUR(metrics.rentF2)} / mois · estimation du modèle, à vérifier`;
+        elements.infoHousePrice.textContent=`3p : ${formatEUR(metrics.house3p)} · 4p : ${formatEUR(metrics.house4p)} · estimations du modèle`;
+        const daily=elements.onlineData.checked?realData?.weather?.daily:null;
+        elements.infoClimate.textContent=daily?.temperature_2m_max?.length?`Prévisions 7 jours à proximité de ${cityData[0]?.name||name} : max ${Math.round(Math.max(...daily.temperature_2m_max))}°C · min ${Math.round(Math.min(...daily.temperature_2m_min))}°C · Open-Meteo`:localClimate(code,meta);
+        renderCityChips(cityData);updateCityHighlight(cityData[0]);updateCityMarker(cityData[0]);
+        const reference=cityData.slice(0,3).map(c=>c.name).join(", ");
+        elements.infoSummary.textContent=`${code} ${name}${local?.region?` · ${local.region}`:""}. ${reference?`Les principales villes de la base sont ${reference}. `:""}${local?`Densité calculée : environ ${local.density.toLocaleString("fr-FR")} habitants/km² sur le contour simplifié. `:""}Les données géographiques sont embarquées ; les prix et scores restent des hypothèses à vérifier.`;
+        elements.infoSources.textContent=`Base locale : API géographique de l’État, photographie du ${window.SOUHAITS_TERRITORIES?.metadata?.capturedAt||"jour de collecte"}. Population : somme des communes, pas un millésime de recensement revendiqué. Aucun appel externe nécessaire.`;
+        if(elements.onlineData.checked&&realData?.wikiDept?.extract){
+          elements.infoSummary.textContent=realData.wikiDept.extract;
+          const link=document.createElement("a");link.href=`https://fr.wikipedia.org/wiki/${encodeURIComponent(realData.wikiDept.title||name)}`;link.textContent=" Résumé Wikipédia (CC BY-SA).";link.target="_blank";link.rel="noopener noreferrer";elements.infoSources.append(link);
         }
-        if(refresh){
-          // Independent tasks: photos and weather never block the initial profile or Groq.
-          loadWikimediaPhotos(name, requestId);
-          buildRealDepartmentData(code,name).then(real => {
-            if(!isObsolete()) updateGlobalInfo(code,name,getPredictionByCode(code),requestId,real,false);
-          }).catch(() => { if(!isObsolete()) elements.infoSources.textContent = "Services externes indisponibles. Profil local indicatif affiché."; });
-        }
+        renderLocalAdvice(meta,pred,local);
+        elements.infoSortedMetrics.innerHTML=buildSortedMetrics(meta,pred,metrics,cityData).map(m=>`<li><span><strong>${escapeHtml(m.label)}</strong><br><span class="muted">${escapeHtml(m.desc)}</span></span><span>${safeNum(m.value,0).toLocaleString("fr-FR")}${m.unit}</span></li>`).join("");
+        if(refresh&&elements.onlineData.checked){
+          loadWikimediaPhotos(name,requestId);
+          buildRealDepartmentData(code,name).then(real=>{if(!isObsolete())updateGlobalInfo(code,name,getPredictionByCode(code),requestId,real,false);}).catch(()=>{});
+        }else if(!elements.onlineData.checked)elements.photoGrid.replaceChildren();
       }
 
       async function loadWikimediaPhotos(name, requestId){
-        const isObsolete = () => requestId !== state.selectedDeptRequestId;
+        const isObsolete = () => requestId !== state.selectedDeptRequestId || !elements.onlineData.checked;
         elements.photoGrid.textContent = "Recherche de photos…";
         try {
-          const query = `${name} France paysage`;
+          const query = `"${name}"`;
           const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=600&format=json&origin=*`;
           const json = await fetchJson(url);
           if(isObsolete()) return;
@@ -1617,14 +1479,6 @@
           zoomControl: true,
           attributionControl: true
         }).setView([46.65, 2.3], 6);
-
-        L.tileLayer(
-          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          {
-            maxZoom: 18,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          }
-        ).addTo(state.map);
 
         state.heatmapLegendControl = createHeatmapLegend();
         if(state.heatmapEnabled){
@@ -1685,7 +1539,7 @@
         const franceMetropolitaineBounds = L.latLngBounds([[41.0, -5.8], [51.7, 9.8]]);
         state.map.fitBounds(franceMetropolitaineBounds, { padding:[20,20] });
         updateMapStyling();
-        elements.mapStatus.textContent = `Carte prête : ${geojson.features.length} départements. Contours embarqués, indépendants des services externes.`;
+        elements.mapStatus.textContent = `Carte prête : ${geojson.features.length} départements. Carte locale autonome ; fond en ligne facultatif.`;
         new ResizeObserver(() => state.map.invalidateSize()).observe(document.getElementById("map"));
         setTimeout(() => state.map.invalidateSize(), 100);
       }
@@ -1724,7 +1578,6 @@
         setFormData({
           listeType: "LC",
           rang: "317",
-          groqModel: elements.groqModel.value,
           totalPostes: "790",
           prioHandicap: false,
           prioConjoint: false,
@@ -1765,8 +1618,6 @@
       }
 
       function resetUI(){
-        clearTimeout(modelScanTimer);
-        cancelAnalysis(); clearModels(); elements.groqApiKey.value = ""; elements.rememberKey.checked = false;
         try { localStorage.removeItem(STORAGE_KEY); } catch (_error) {}
         state.selectedDeptRequestId += 1;
         elements.allResults.replaceChildren();
@@ -1775,8 +1626,6 @@
         setFormData({
           listeType:"LC",
           rang:"",
-          groqModel:"",
-          groqApiKey:"",
           totalPostes:"790",
           prioHandicap:false,
           prioConjoint:false,
@@ -1823,27 +1672,31 @@
         elements.infoSummary.textContent = "Clique un département pour voir le résumé global.";
         elements.photoGrid.innerHTML = "";
         drawRadar(null);
-        syncAnalyzeButton();
         updateMapStyling();
-        setStatus("Formulaire et sauvegarde locale effacés.");
+        updateWishCount();updateScenarioSummary();refreshSelectedWishButton();
+        elements.localAdvice.textContent="Sélectionnez un département pour voir sa synthèse locale.";
+        elements.generatorStatus.textContent="";
+        elements.onlineData.checked=false;elements.onlineBasemap.checked=false;toggleBasemap();
+        setStatus("Formulaire et sauvegarde locale effacés. Votre préférence de thème est conservée.");
       }
 
       function escapeHtml(value){
         return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       }
       function clearPredictions(){
-        cancelAnalysis();
         state.predictions = [];
         state.heatmapScale = computeHeatmapScale([]);
         ['kpiTop3','kpiOffice','kpiRank','kpiDeptScore'].forEach(key => elements[key].textContent = '-');
         elements.top3.textContent = 'Aucun résultat. Vérifie le formulaire.';
         elements.allResults.replaceChildren();
         updateMapStyling(); refreshHeatmapLegend(); drawRadar(null);
-        if(state.selectedDeptCode) updateDgfipPanelForDept(state.selectedDeptCode,state.selectedDeptName,null);
+        if(state.selectedDeptCode){updateDgfipPanelForDept(state.selectedDeptCode,state.selectedDeptName,null);updateGlobalInfo(state.selectedDeptCode,state.selectedDeptName,null,state.selectedDeptRequestId,null,false);}
+        updateScenarioSummary();
       }
       function renderAllResults(){
-        elements.allResults.innerHTML = `<table><thead><tr><th>Vœu</th><th>Département</th><th>Score simulé</th></tr></thead><tbody>${state.predictions.map(p => `<tr><td>${p.ordre}</td><td><button type="button" data-dept="${p.code}">${escapeHtml(p.code+' '+p.nom)}</button></td><td>${pct(p.proba)}</td></tr>`).join('')}</tbody></table>`;
-        elements.allResults.querySelectorAll('[data-dept]').forEach(btn => btn.addEventListener('click', () => openDepartment(btn.dataset.dept)));
+        elements.allResults.innerHTML=`<table><thead><tr><th>Vœu</th><th>Département</th><th>Part simulée</th><th>Ordre</th></tr></thead><tbody>${state.predictions.map((p,index)=>`<tr><td>${p.ordre}</td><td><button type="button" data-dept="${p.code}">${escapeHtml(p.code+' '+p.nom)}</button></td><td>${pct(p.proba)}</td><td class="reorderActions"><button type="button" data-move="-1" data-code="${p.code}" aria-label="Monter ${escapeHtml(p.nom)}" ${index===0?'disabled':''}>↑</button><button type="button" data-move="1" data-code="${p.code}" aria-label="Descendre ${escapeHtml(p.nom)}" ${index===state.predictions.length-1?'disabled':''}>↓</button></td></tr>`).join('')}</tbody></table>`;
+        elements.allResults.querySelectorAll('[data-dept]').forEach(btn=>btn.addEventListener('click',()=>openDepartment(btn.dataset.dept)));
+        elements.allResults.querySelectorAll('[data-move]').forEach(btn=>btn.addEventListener('click',()=>moveWish(btn.dataset.code,Number(btn.dataset.move))));
       }
       function exportResults(){
         if(!state.predictions.length){ setStatus('Lance une simulation avant l’export.'); return; }
@@ -1864,139 +1717,97 @@
         const code = findDeptCode(raw);
         if(!code){ setStatus('Département non reconnu. Saisis son code ou son nom.'); return; }
         handleDeptClick(code,deptDB[code].nom);
+        elements.mapRegion.value=code==='971'||code==='972'?'antilles':code==='973'?'guyane':code==='974'?'reunion':code==='976'?'mayotte':'metro';
         const layer = state.deptLayersByCode[code];
         if(state.map && layer) state.map.fitBounds(layer.getBounds(),{padding:[25,25],maxZoom:9});
       }
-      function syncAnalyzeButton(){
-        const ready = !!state.selectedDeptCode && !!elements.groqModel.value && state.modelKey === elements.groqApiKey.value.trim();
-        elements.btnAnalyze.disabled = !ready || !!state.analysisController;
-        elements.btnTestModel.disabled = !elements.groqModel.value || !!state.modelTestController;
+      function updateWishCount(){
+        const codes=new Set(elements.souhaits.value.split(/\n+/).map(findDeptCode).filter(Boolean));
+        elements.wishCount.textContent=`${codes.size} département${codes.size>1?'s':''}`;
       }
-      function cancelAnalysis(){
-        state.analysisGeneration += 1;
-        state.analysisController?.abort(); state.analysisController = null;
-        elements.aiAnalysis.textContent = 'Sélectionne un département et un modèle, puis lance une analyse.';
-        elements.btnAnalyze.textContent = 'Analyser ce département avec Groq';
-        syncAnalyzeButton();
-      }
-      function clearModels(){
-        state.modelGeneration += 1;
-        state.modelScanController?.abort(); state.modelScanController = null;
-        state.modelTestController?.abort(); state.modelTestController = null;
-        state.models = []; state.modelKey = null;
-        elements.groqModel.replaceChildren(new Option('Ajoute une clé pour découvrir les modèles',''));
-        elements.groqModel.disabled = true;
-        elements.groqStatus.textContent = 'IA facultative. La carte et les calculs fonctionnent sans clé.';
-        elements.btnScanModels.disabled = false; elements.btnScanModels.textContent = 'Actualiser les modèles';
-        cancelAnalysis();
-      }
-      async function scanModels(){
-        const preferred = elements.groqModel.value || state.preferredModel;
-        clearModels();
-        const key = elements.groqApiKey.value.trim();
-        if(!key){ elements.groqStatus.textContent = 'Ajoute une clé API Groq pour découvrir les modèles.'; return; }
-        const generation = state.modelGeneration;
-        const controller = new AbortController(); state.modelScanController = controller;
-        elements.btnScanModels.disabled = true; elements.btnScanModels.textContent = 'Recherche…';
-        elements.groqStatus.textContent = 'Lecture du catalogue des modèles Groq avec ta clé…';
-        try {
-          const models = await SouhaitsGroq.listModels(key,{signal:controller.signal});
-          if(generation !== state.modelGeneration || key !== elements.groqApiKey.value.trim()) return;
-          state.models = models; state.modelKey = key;
-          elements.groqModel.replaceChildren();
-          if(!models.length){
-            elements.groqModel.append(new Option('Aucun modèle de texte détecté',''));
-            elements.groqStatus.textContent = 'Aucun modèle adapté trouvé dans ce catalogue. Vérifie ton projet Groq.';
-            return;
-          }
-          for(const recommended of [true,false]){
-            const groupModels = models.filter(model => model.recommended === recommended);
-            if(!groupModels.length) continue;
-            const group = document.createElement('optgroup');
-            group.label = recommended ? 'Conseillés pour Souhaits' : 'Autres modèles de texte · à tester';
-            for(const model of groupModels) group.append(new Option(`${model.id} · ${model.label}`, model.id));
-            elements.groqModel.append(group);
-          }
-          elements.groqModel.disabled = false;
-          elements.groqModel.value = models.some(m => m.id === preferred) ? preferred : models[0].id;
-          state.preferredModel = elements.groqModel.value;
-          elements.groqStatus.textContent = `${models.length} modèles de texte détectés (${models.filter(m => m.recommended).length} conseillés). Catalogue actualisé. « Tester le modèle » vérifie l’accès réel de ta clé par un court appel.`;
-        } catch(error) {
-          if(generation !== state.modelGeneration) return;
-          elements.groqStatus.textContent = error.message;
-        } finally {
-          if(generation === state.modelGeneration){
-            state.modelScanController = null;
-            elements.btnScanModels.disabled = false; elements.btnScanModels.textContent = 'Actualiser les modèles';
-            syncAnalyzeButton();
-          }
+      function renderLocalAdvice(meta,pred,local){
+        const advice=SouhaitsLocal.advice(meta,pred,local);
+        elements.localAdvice.replaceChildren();
+        for(const [key,title] of [['facts','Repères concrets'],['strengths','À mettre en balance'],['cautions','Points de vigilance']]){
+          const card=document.createElement('article');card.className=`adviceCard ${key}`;
+          const heading=document.createElement('h4');heading.textContent=title;
+          const list=document.createElement('ul');
+          for(const text of advice[key]){const item=document.createElement('li');item.textContent=text;list.append(item);}
+          card.append(heading,list);elements.localAdvice.append(card);
         }
       }
-      async function testSelectedModel(){
-        const key = elements.groqApiKey.value.trim(), model = elements.groqModel.value;
-        if(!model || key !== state.modelKey) return;
-        state.modelTestController?.abort();
-        const controller = new AbortController(); state.modelTestController = controller;
-        const generation = state.modelGeneration;
-        syncAnalyzeButton(); elements.groqStatus.textContent = `Test d’accès à ${model}…`;
-        try {
-          await SouhaitsGroq.testModel(key,model,{signal:controller.signal});
-          if(state.modelTestController === controller && generation === state.modelGeneration && model === elements.groqModel.value) elements.groqStatus.textContent = `${model} : accès confirmé par une réponse de Groq.`;
-        } catch(error) {
-          if(state.modelTestController === controller && generation === state.modelGeneration && model === elements.groqModel.value) elements.groqStatus.textContent = error.message;
-        } finally {
-          if(state.modelTestController === controller){ state.modelTestController = null; syncAnalyzeButton(); }
-        }
+      function updateScenarioSummary(){
+        elements.scenarioSummary.replaceChildren();
+        if(!state.predictions.length){delete elements.kpiOffice.closest('.kpi').dataset.level;elements.scenarioSummary.textContent='Votre synthèse locale apparaîtra après le calcul. Aucune IA ni connexion requise.';elements.scenarioSummary.dataset.level='empty';return;}
+        const sorted=[...state.predictions].sort((a,b)=>b.proba-a.proba),top=sorted.slice(0,3);
+        const remaining=clamp(100-state.predictions.reduce((sum,p)=>sum+p.proba,0),0,100);
+        const title=document.createElement('strong');title.textContent=`${state.predictions.length} vœux, une vue d’ensemble.`;
+        const detail=document.createElement('p');detail.textContent=`${top.map(p=>p.nom).join(', ')} arrivent en tête de ce scénario. Le top 3 rassemble ${pct(top.reduce((sum,p)=>sum+p.proba,0))} des affectations simulées.`;
+        const risk=document.createElement('span');risk.className='riskPill';risk.textContent=`Risque résiduel simulé : ${pct(remaining)}`;
+        elements.scenarioSummary.dataset.level=remaining>=60?'high':remaining>=30?'watch':'low';
+        elements.kpiOffice.closest('.kpi').dataset.level=elements.scenarioSummary.dataset.level;
+        elements.scenarioSummary.append(title,detail,risk);
       }
-      async function analyzeSelectedDepartment(){
-        const key = elements.groqApiKey.value.trim(), model = elements.groqModel.value, code = state.selectedDeptCode;
-        if(!code || !model || key !== state.modelKey) return;
-        cancelAnalysis();
-        const generation = state.analysisGeneration;
-        const controller = new AbortController(); state.analysisController = controller;
-        syncAnalyzeButton(); elements.btnAnalyze.textContent = 'Analyse en cours…';
-        elements.aiAnalysis.textContent = `Analyse de ${code} ${state.selectedDeptName} avec ${model}…`;
-        const meta = {...deptDB[code],code}, metrics = estimateDepartmentMetrics(meta), real = state.realDataCache[code];
-        const context = {departement:{code,nom:meta.nom},profil_local_indicatif:meta,
-          hypotheses_non_verifiees:metrics,simulation_non_officielle:getPredictionByCode(code),
-          donnees_publiques:real ? {communes:real.communes,population:real.population,region:real.region,resume_wikipedia:real.wikiDept?.extract} : null};
-        try {
-          const text = await SouhaitsGroq.analyze(key,model,context,{signal:controller.signal});
-          if(generation !== state.analysisGeneration || code !== state.selectedDeptCode || model !== elements.groqModel.value || key !== elements.groqApiKey.value.trim()) return;
-          // Model output is untrusted; render as text and keep sourced facts intact.
-          elements.aiAnalysis.textContent = `${text}\n\nModèle : ${model} · Analyse IA indicative, à vérifier.`;
-          elements.groqStatus.textContent = `Analyse reçue de ${model}.`;
-        } catch(error) {
-          if(generation === state.analysisGeneration){ elements.aiAnalysis.textContent = error.message; elements.groqStatus.textContent = error.message; }
-        } finally {
-          if(generation === state.analysisGeneration){ state.analysisController = null; elements.btnAnalyze.textContent = 'Analyser ce département avec Groq'; syncAnalyzeButton(); }
-        }
+      function animateResults(){
+        const panel=document.getElementById('resultats');panel.classList.remove('resultUpdated');
+        clearTimeout(state.animationTimer);requestAnimationFrame(()=>panel.classList.add('resultUpdated'));state.animationTimer=setTimeout(()=>panel.classList.remove('resultUpdated'),650);
       }
-      function persistKeyPreference(){
+      function generateTestWishes(){
         try {
-          const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || getFormData();
-          delete data.groqApiKey; delete data.rememberGroqKey;
-          if(elements.rememberKey.checked){ data.groqApiKey = elements.groqApiKey.value.trim(); data.rememberGroqKey = true; }
-          localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-        } catch(_error){ if(elements.rememberKey.checked) setStatus('Le navigateur empêche la mémorisation de la clé.'); }
+          const result=SouhaitsLocal.generateWishes(deptDB,{count:Number(elements.testCount.value),scope:elements.testScope.value,profile:elements.testProfile.value});
+          if(!result.wishes.length){elements.generatorStatus.textContent='Aucun département ne correspond à ces critères. Essayez un autre profil.';return;}
+          elements.souhaits.value=result.wishes.map(d=>`${d.code} ${d.nom}`).join('\n');
+          if(!elements.rang.value)elements.rang.value='317';
+          updateWishCount();buildPredictions();
+          const first=result.wishes[0];openDepartment(first.code);
+          elements.generatorStatus.textContent=`${result.wishes.length} vœux de test générés, sans doublon.${result.limited?` ${result.available} départements correspondent à ces critères : la liste a été limitée.`:''} Cliquez à nouveau pour varier la liste.`;
+        }catch(error){elements.generatorStatus.textContent=error.message;}
       }
-      let modelScanTimer;
-      elements.groqApiKey.addEventListener('input', () => {
-        clearTimeout(modelScanTimer);
-        state.preferredModel = elements.groqModel.value || state.preferredModel;
-        clearModels(); persistKeyPreference();
-        if(elements.groqApiKey.value.trim()) modelScanTimer = setTimeout(scanModels,650);
-      });
-      elements.btnScanModels.addEventListener('click', () => { clearTimeout(modelScanTimer); scanModels(); });
-      elements.groqModel.addEventListener('change', () => {
-        state.preferredModel = elements.groqModel.value;
-        state.modelTestController?.abort(); state.modelTestController = null;
-        cancelAnalysis();
-        elements.groqStatus.textContent = `${elements.groqModel.value} sélectionné. Tu peux tester son accès ou lancer une analyse.`;
-      });
-      elements.btnTestModel.addEventListener('click',testSelectedModel);
-      elements.btnAnalyze.addEventListener('click',analyzeSelectedDepartment);
-      elements.rememberKey.addEventListener('change',persistKeyPreference);
+      function refreshSelectedWishButton(){
+        elements.btnToggleWish.disabled=!state.selectedDeptCode;
+        if(!state.selectedDeptCode){elements.btnToggleWish.textContent='Choisissez un département';return;}
+        const included=elements.souhaits.value.split(/\n+/).some(line=>findDeptCode(line)===state.selectedDeptCode);
+        elements.btnToggleWish.dataset.included=String(included);
+        elements.btnToggleWish.textContent=included?`Retirer ${state.selectedDeptCode} de mes vœux`:`Ajouter ${state.selectedDeptCode} à mes vœux`;
+      }
+      function toggleSelectedWish(){
+        const code=state.selectedDeptCode;if(!code)return;
+        const lines=elements.souhaits.value.split(/\n/).filter(line=>line.trim());
+        if(lines.some(line=>findDeptCode(line)===code))elements.souhaits.value=lines.filter(line=>findDeptCode(line)!==code).join('\n');
+        else elements.souhaits.value=[...lines,`${code} ${deptDB[code].nom}`].join('\n');
+        updateWishCount();refreshSelectedWishButton();buildPredictions();
+      }
+      function moveWish(code,direction){
+        const lines=elements.souhaits.value.split('\n'),seen=new Set(),recognized=[];
+        lines.forEach((raw,index)=>{const current=findDeptCode(raw);if(current&&!seen.has(current)){seen.add(current);recognized.push({code:current,index});}});
+        const current=recognized.findIndex(row=>row.code===code),target=current+direction;
+        if(current<0||target<0||target>=recognized.length)return;
+        const i=recognized[current].index,j=recognized[target].index;[lines[i],lines[j]]=[lines[j],lines[i]];
+        elements.souhaits.value=lines.join('\n');updateWishCount();buildPredictions();
+      }
+      function toggleBasemap(){
+        if(!state.map||typeof L==='undefined')return;
+        if(state.basemap){state.map.removeLayer(state.basemap);state.basemap=null;}
+        if(elements.onlineBasemap.checked)state.basemap=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(state.map);
+      }
+      function initLocalFeatures(){
+        elements.onlineData.checked=false;elements.onlineBasemap.checked=false;
+        elements.btnGenerate.addEventListener('click',generateTestWishes);
+        elements.btnToggleWish.addEventListener('click',toggleSelectedWish);
+        elements.souhaits.addEventListener('input',()=>{updateWishCount();refreshSelectedWishButton();clearPredictions();});
+        [elements.rang,elements.totalPostes,elements.pondChoix,elements.pondAttrac,elements.pondTension].forEach(input=>input.addEventListener('input',clearPredictions));
+        [elements.listeType,elements.prioHandicap,elements.prioConjoint,elements.csEnfant,elements.csSoutien,elements.modeLonguenesse].forEach(input=>input.addEventListener('change',clearPredictions));
+        elements.onlineBasemap.addEventListener('change',toggleBasemap);
+        elements.onlineData.addEventListener('change',()=>{
+          state.selectedDeptRequestId+=1;elements.photoGrid.replaceChildren();
+          if(state.selectedDeptCode)updateGlobalInfo(state.selectedDeptCode,state.selectedDeptName,getPredictionByCode(state.selectedDeptCode),state.selectedDeptRequestId,state.realDataCache[state.selectedDeptCode]);
+        });
+        window.addEventListener('souhaits:themechange',()=>{updateMapStyling();drawRadar(getPredictionByCode(state.selectedDeptCode));});
+        updateWishCount();refreshSelectedWishButton();updateScenarioSummary();
+        // Register only in secure web contexts. file:// still supports the local app itself.
+        if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{const label=document.getElementById('offlineStatus');if(label)label.textContent='Application prête hors connexion';}).catch(()=>{});
+      }
+
       elements.btnOpenDept.addEventListener('click',() => openDepartment(elements.deptSearch.value));
       elements.deptSearch.addEventListener('keydown',event => { if(event.key === 'Enter') openDepartment(elements.deptSearch.value); });
       elements.btnExport.addEventListener('click',exportResults);
@@ -2022,17 +1833,12 @@
         drawRadar(getPredictionByCode(state.selectedDeptCode));
       });
 
-      document.getElementById("configureGroq")?.addEventListener("click", () => {
-        const details = document.getElementById("groqSettings");
-        if(details) details.open = true;
-      });
       loadLocal();
-      if(elements.groqApiKey.value.trim()) document.getElementById("groqSettings").open = true;
       initDepartmentSearch();
       drawRadar(null);
-      if(elements.groqApiKey.value.trim()) scanModels();
       updateHeatmapUi();
       updateFullscreenButtons();
+      initLocalFeatures();
       initMap().catch(err => {
         elements.mapStatus.textContent = `Carte indisponible : ${err.message} Utilise la recherche de département ci-dessus.`;
       });

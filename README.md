@@ -1,46 +1,59 @@
-# Souhaits V8 — Simulateur DGFiP
+# Souhaits V9 — Simulateur autonome DGFiP
 
-[Ouvrir le site](https://s00r1.github.io/souhaits/)
+[Ouvrir Souhaits](https://s00r1.github.io/souhaits/)
 
-Comparez une liste de départements, explorez une carte et obtenez une analyse facultative avec votre clé Groq.
+Carte, fiches territoriales, calculs, synthèses et listes de test fonctionnent **sans Groq, sans clé et sans IA**. Les fichiers nécessaires et les données géographiques sont inclus dans le projet.
 
-**Outil personnel non officiel.** Les flux, postes, prix et pourcentages du moteur sont des hypothèses historiques non vérifiées. Ils ne prédisent pas une décision réelle de la DGFiP. Les priorités et règles d’affectation doivent être vérifiées auprès de l’administration. Le modèle IA ne remplace pas les règles officielles.
+**Outil indépendant et non officiel.** Les flux, postes, prix, indices et pourcentages restent des hypothèses du simulateur, pas des prévisions validées. Vérifiez les postes et les règles de priorité auprès de la DGFiP. Les repères démographiques embarqués sont distingués de ces hypothèses.
 
-## Nouvelle interface V8
+## Préparer et comparer
 
-Une présentation claire inspirée d’un atlas : fond ivoire, encre vert sombre, carte désaturée et scores en camaïeu. Le parcours commence par le profil et les vœux ; situations, hypothèses et assistant Groq sont organisés en panneaux repliables. Sur mobile, une barre fixe permet de rejoindre le projet, la carte et les résultats. La vue des résultats regroupe les indicateurs, les trois premières pistes et l’explication du département. Navigation clavier, contrastes, affichage d’impression et réduction des animations sont pris en compte.
+1. Saisissez votre rang, votre liste LC/LP et vos départements, un par ligne, dans l’ordre de préférence.
+2. Cliquez sur **Calculer mes perspectives** ou utilisez le générateur de test.
+3. Sélectionnez un département sur la carte ou avec la recherche. Ses villes, populations, coordonnées et sa synthèse locale apparaissent immédiatement.
+4. Le bouton de la carte ajoute ou retire le département sélectionné de vos vœux. Le tableau **Tous les vœux** permet de monter/descendre un choix et recalcule la simulation.
+5. **Sauvegarder** conserve le projet dans ce navigateur. **Exporter CSV** télécharge les résultats. **Effacer** supprime le projet sauvegardé, en conservant votre thème.
 
-## Utilisation
+Les doublons sont ignorés et les lignes inconnues signalées. Modifier le profil invalide les anciens résultats. Les parts de tous les vœux et le risque résiduel totalisent 100 % avant arrondis.
 
-1. Saisissez votre type de liste, votre rang et vos départements dans l’ordre souhaité, un par ligne. Les codes et noms sont acceptés.
-2. Cliquez sur **Calculer**, ou **Exemple** pour essayer avec un profil complet.
-3. Cliquez sur un département de la carte, une carte du top 3, un vœu du tableau complet, ou utilisez la recherche par code/nom.
-4. Activez/désactivez la heatmap et utilisez le sélecteur pour la métropole, les Antilles, la Guyane, La Réunion ou Mayotte.
-5. Enregistrez vos réglages avec **Sauver local** ou téléchargez vos résultats en CSV. **Effacer** supprime le formulaire et la sauvegarde de cette application.
+## Générer des vœux de test
 
-Les lignes inconnues sont signalées. Un département répété ne compte qu’une fois ; l’ordre de sa première occurrence est conservé. La somme des parts simulées et du risque résiduel d’affectation d’office est de 100 % avant arrondis.
+Le panneau **Générer des vœux de test** propose :
 
-## Groq : découvrir et choisir un modèle réel
+- 1 à 101 départements demandés ;
+- métropole, France entière ou outre-mer ;
+- liste équilibrée, aléatoire, littorale, montagne ou budget logement modéré.
 
-1. Créez une clé sur la [console Groq](https://console.groq.com/keys).
-2. Ouvrez **Assistant Groq**, puis collez-la dans le champ de l’application : le catalogue est automatiquement récupéré via `GET https://api.groq.com/openai/v1/models`. **Actualiser les modèles** relance cette découverte.
-3. Sélectionnez un identifiant retourné par l’API. Les modèles de texte connus pour l’analyse sont classés dans **Conseillés pour Souhaits**. Les autres candidats sont proposés séparément et les modèles audio, de transcription, de modération ou d’embeddings sont exclus.
-4. **Tester le modèle** fait un court appel à Chat Completions pour confirmer l’accès réel de cette clé. La liste de modèles ne garantit pas à elle seule les permissions d’inférence du projet ou le quota disponible.
-5. Sélectionnez un département, puis cliquez sur **Analyser ce département avec Groq**. L’analyse utilise exactement le modèle choisi. Elle est affichée séparément des données publiques et ne remplace pas les faits par des chiffres générés.
+**Générer et simuler** remplace la liste affichée sans doublons, conserve les autres réglages et ajoute le rang de test 317 si le champ est vide. La liste est limitée au nombre de départements correspondant aux critères (par exemple cinq en outre-mer). Cliquez à nouveau pour varier les choix. Les critères « littoral », « montagne » et « budget » utilisent les catégories du modèle local ; ils ne constituent pas un catalogue administratif de postes.
 
-Les recommandations sont un classement éditorial, pas un benchmark automatique. Un modèle inconnu peut demander d’autres paramètres ou être incompatible ; utilisez le test. L’application ne substitue pas silencieusement un autre modèle. Les erreurs de clé, permissions, quota et timeout sont expliquées. Les changements de clé, modèle ou département annulent les anciennes opérations pour éviter les réponses hors contexte.
+## Clair, sombre ou automatique
 
-La clé est transmise uniquement à `api.groq.com`, dans un en-tête d’autorisation. Par défaut elle reste en mémoire de la page, sans stockage persistant. L’option **Mémoriser la clé sur cet appareil** permet de la stocker dans le navigateur ; la décocher la retire immédiatement de la sauvegarde. Une clé conservée par l’ancienne version est retirée du stockage lors de la migration, sauf consentement explicite enregistré en V7. Aucune clé ne doit être ajoutée au dépôt. Les appels de test et d’analyse consomment le quota Groq.
+Le sélecteur en haut de page propose **Clair**, **Sombre** et **Auto**. Le choix est conservé sur l’appareil. Auto suit le thème système et réagit à ses changements. La carte, les champs, les fiches, les indicateurs et la navigation sont adaptés aux deux thèmes. Les mouvements sont réduits si le système le demande.
 
-## Carte et données
+Les résultats utilisent des repères colorés et des textes explicites : top 3, risque simulé, rang et sélection. La synthèse locale sépare les faits embarqués, les éléments à comparer et les points de vigilance. Elle est calculée par des règles transparentes, sans modèle génératif.
 
-Leaflet et les contours des **101 départements** sont inclus dans le dépôt : leur chargement ne dépend pas d’un CDN ou d’une API géographique. Les fonds de carte OpenStreetMap restent facultatifs et nécessitent Internet. Les contours demeurent cliquables sans ces tuiles.
+## Fonctionnement autonome et hors connexion
 
-Le profil local apparaît immédiatement. Les communes/populations et positions réelles proviennent de l’API géographique de l’État ; les prévisions sur 7 jours d’Open-Meteo ; les résumés et photos de Wikipédia/Wikimedia Commons. Ces services ont un délai limite et restent facultatifs. La fiche précise les sources effectivement disponibles. Les marqueurs de villes utilisent de vraies coordonnées ; aucune position n’est inventée. Les prix, distances et autres données locales restent des estimations identifiées.
+Par défaut, **aucune requête vers un service tiers** n’est nécessaire : même la carte utilise ses contours embarqués, sans fond de tuiles distant. Les 101 fiches comprennent les principales communes, leurs populations et leurs coordonnées, ainsi que la région, une population agrégée et une densité calculée.
 
-Voir [SOURCES.md](./SOURCES.md) pour les sources et licences.
+Après une première ouverture sur HTTPS et la mise en cache, le pied de page affiche **Application prête hors connexion**. La page peut alors être rechargée sans réseau. Cela dépend du support des service workers et du stockage disponible dans le navigateur. Les contrôles restent utilisables si ce stockage est bloqué ; seule la sauvegarde persistante ou le cache peuvent être indisponibles.
 
-## Développement et vérifications
+Deux options explicites restent disponibles :
+
+- **Fond de carte en ligne** : tuiles OpenStreetMap, chargées uniquement sur activation.
+- **Compléments en ligne** : météo, Wikipédia et photos, chargés uniquement sur activation. Une panne n’empêche pas l’utilisation des fiches locales. Désactiver l’option empêche une réponse tardive de modifier la fiche.
+
+Les tuiles et contenus de tiers ne sont pas préchargés par le cache hors connexion. Sans Internet, les photos et la météo en direct ne sont pas disponibles ; les fonctions locales restent opérationnelles.
+
+Les anciennes sauvegardes sont migrées en conservant le projet et en retirant les champs de connexion. Le client Groq a été supprimé.
+
+## Données et limites
+
+Photographie de l’API géographique de l’État récupérée le **24 novembre 2026**. Les populations sont celles exposées par les réponses communales à cette date ; la réponse ne précise pas un millésime de recensement. Les totaux sont des sommes communales. Les surfaces et densités sont approchées à partir des contours simplifiés, sans valeur cadastrale. Aucune population de ville, température ou distance routière n’est inventée pour remplir une fiche.
+
+Les prix restent des ordres de grandeur du modèle, signalés comme tels. Voir [SOURCES.md](./SOURCES.md) pour les sources et licences.
+
+## Développer et vérifier
 
 ```sh
 npm ci
@@ -51,15 +64,15 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Le site est statique : aucun build et aucun serveur applicatif ne sont nécessaires sur GitHub Pages. Pour un usage local complet, lancez `npm start` plutôt que de copier uniquement `index.html` : le dossier `assets/` est indispensable.
+Aucun build n’est nécessaire sur GitHub Pages. Pour un usage local, conservez **tout le dossier** : copier uniquement `index.html` ne suffit pas. Les fonctions locales peuvent aussi s’ouvrir avec `file://`, mais la mise en cache par service worker nécessite un contexte web sécurisé ou localhost.
 
-- `index.html` : interface.
-- `assets/app.js` et `assets/app.css` : carte, profils, calculs et réglages.
-- `assets/groq.js` : découverte, erreurs, test et analyse Groq.
-- `assets/departements.js` : contours simplifiés embarqués.
-- `assets/vendor/leaflet/` : bibliothèque cartographique locale.
-- `tests/` : régressions avec API simulées, contrôle des opérations tardives et tests navigateur desktop/mobile.
+- `assets/app.js` : calculs, carte, fiches et actions sur les vœux.
+- `assets/local-tools.js` : générateur de test et synthèse à règles fixes, sans réseau.
+- `assets/theme.js` : thème appliqué avant le chargement du style.
+- `assets/territoires.js` : photographie démographique et coordonnées des villes.
+- `assets/departements.js` et `assets/vendor/leaflet/` : carte embarquée.
+- `sw.js` : cache des seuls fichiers de l’application. À chaque mise à jour, changer sa version et les URLs de cache en même temps que celles de `index.html`.
+- `scripts/build-territories.py` : reconstruction de la photographie à partir des réponses publiques enregistrées.
+- `tests/` : régressions locales et tests navigateur sur ordinateur et mobile, dont une vraie réouverture hors connexion.
 
-La CI lance les tests et conserve les captures navigateur. Le site existant est publié par GitHub Pages depuis `main`.
-
-Licence MIT pour le code du projet ; dépendances et données sous leurs licences respectives.
+Licence MIT pour le code ; dépendances et données sous leurs licences respectives.

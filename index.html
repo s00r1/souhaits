@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f4f5f0" />
   <meta name="description" content="Un espace clair pour préparer vos vœux DGFiP, explorer les départements et comparer vos simulations." />
-  <title>Souhaits — Explorez votre prochaine étape</title>
+  <title>Souhaits — Votre simulateur autonome</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <script src="./assets/theme.js?v=9.0.0"></script>
   <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="./assets/app.css?v=8.0.1" />
+  <link rel="stylesheet" href="./assets/app.css?v=9.0.0" />
 </head>
 <body>
   <a class="skipLink" href="#preparer">Aller au simulateur</a>
@@ -15,14 +17,14 @@
     <header class="topbar">
       <a href="#" class="brand" aria-label="Souhaits, accueil"><span class="brandMark" aria-hidden="true">✦</span>souhaits<span class="brandPeriod">.</span></a>
       <nav class="desktopNav" aria-label="Navigation principale"><a href="#preparer">Préparer</a><a href="#explorer">Explorer</a><a href="#resultats">Comparer</a></nav>
-      <a class="sourceLink" href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Le projet <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a>
+      <div class="headerActions"><label class="themeControl"><span class="srOnly">Thème</span><select id="themeSelect" aria-label="Thème"><option value="system">Auto</option><option value="light">Clair</option><option value="dark">Sombre</option></select></label><a class="sourceLink" href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Le projet <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a></div>
     </header>
 
     <main>
       <section class="hero" aria-labelledby="heroTitle">
         <div><div class="eyebrow"><span class="liveDot" aria-hidden="true"></span> VOS VŒUX DGFIP, EN PERSPECTIVE</div>
           <h1 id="heroTitle">Dessinez votre<br><em>prochaine étape.</em></h1>
-          <p>Des envies, des territoires, des possibilités.<br>Un espace pour voir plus clair dans vos choix d’affectation.</p>
+          <p>Des envies, des territoires, des possibilités.<br>Vos calculs, vos fiches et vos synthèses. Sans clé, sans IA.</p>
         </div>
         <div class="heroAside">
           <div class="compass" aria-hidden="true"><span class="compassN">N</span><span class="compassW">O</span><span class="compassE">E</span><span class="compassS">S</span><span class="compassNeedle"></span></div>
@@ -30,24 +32,30 @@
         </div>
       </section>
 
-      <aside class="notice"><span class="noticeIcon" aria-hidden="true">i</span><p><strong>Un éclairage, pas une décision officielle.</strong> Les scores, flux et postes sont des hypothèses de simulation. Vérifiez les règles et priorités auprès de la DGFiP.</p><span class="edition">ÉDITION 08</span></aside>
+      <aside class="notice"><span class="noticeIcon" aria-hidden="true">i</span><p><strong>Un éclairage, pas une décision officielle.</strong> Les scores, flux et postes sont des hypothèses de simulation. Vérifiez les règles et priorités auprès de la DGFiP.</p><span class="edition">ÉDITION 09</span></aside>
 
-      <div class="workspaceHeading"><span>Votre espace de simulation</span><span class="workspaceHint"><span class="liveDot" aria-hidden="true"></span> Calcul local · IA facultative</span></div>
+      <div class="workspaceHeading"><span>Votre espace de simulation</span><span class="workspaceHint"><span class="liveDot" aria-hidden="true"></span> 100 % local · Sans clé</span></div>
       <div class="grid">
         <section class="panel leftPanel" id="preparer" aria-labelledby="profileTitle">
           <div class="panelHeader"><div><span class="eyebrow">01 / LE POINT DE DÉPART</span><h2 id="profileTitle">Votre projet</h2></div><button class="textButton" id="btnExample" type="button">Exemple</button></div>
           <div class="panelBody">
             <div class="formSectionLabel">Votre profil</div>
             <div class="row2">
-              <div class="field"><label for="listeType">Type de liste</label><select id="listeType"><option value="LC">Complémentaire · LC</option><option value="LP">Principale · LP</option></select></div>
+              <div class="field"><label for="listeType">Type de liste</label><select id="listeType"><option value="LC">LC · Complémentaire</option><option value="LP">LP · Principale</option></select></div>
               <div class="field"><label for="rang">Votre rang</label><input id="rang" type="number" min="1" placeholder="Ex. 317" inputmode="numeric" /></div>
             </div>
-            <div class="field wishesField"><div class="fieldLabelRow"><label for="souhaits">Vos départements</label><span>Dans l’ordre de vos envies</span></div>
+            <div class="field wishesField"><div class="fieldLabelRow"><label for="souhaits">Vos départements</label><span id="wishCount" class="countBadge">0 département</span></div>
               <textarea id="souhaits" placeholder="44 Loire-Atlantique
 17 Charente-Maritime
 31 Haute-Garonne" spellcheck="false"></textarea>
               <p class="fieldHint">Un code ou un nom par ligne. Le premier est votre premier vœu.</p>
             </div>
+            <details class="settingsGroup generatorGroup" id="testGenerator" open><summary><span>Générer des vœux de test</span><span class="summaryTag">Nouveau</span></summary><div class="settingsContent">
+              <div class="row2"><div class="field"><label for="testCount">Nombre de vœux</label><input id="testCount" type="number" min="1" max="101" value="12" inputmode="numeric" /></div><div class="field"><label for="testScope">Zone</label><select id="testScope"><option value="metro">Métropole</option><option value="all">France entière</option><option value="overseas">Outre-mer</option></select></div></div>
+              <div class="field"><label for="testProfile">Style de liste</label><select id="testProfile"><option value="balanced">Un peu de tout</option><option value="random">Aléatoire</option><option value="coast">Littoral</option><option value="mountain">Montagne</option><option value="budget">Budget logement modéré</option></select></div>
+              <button id="btnGenerate" type="button" class="generateButton">Générer et simuler <span aria-hidden="true">✦</span></button>
+              <p class="fieldHint">Remplace les vœux affichés. Vos autres réglages sont conservés. Un rang de test est ajouté si le champ est vide.</p><div id="generatorStatus" class="fieldHint" role="status" aria-live="polite"></div>
+            </div></details>
             <details class="settingsGroup" id="prioritySettings"><summary><span>Situations & priorités</span><span class="summaryTag">Facultatif</span></summary><div class="settingsContent">          <label class="check">
             <input id="prioHandicap" type="checkbox" />
             <span>Priorité handicap / RQTH / CMI invalidité</span>
@@ -89,33 +97,20 @@
 </div></details>
             <div class="formActions"><button id="btnCalc" class="primaryButton" type="button">Calculer mes perspectives <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><div class="utilityActions"><button id="btnSave" type="button">Sauvegarder</button><button id="btnExport" type="button">Exporter CSV <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18m-7-7 7 7 7-7"/></svg></span></button><button id="btnReset" type="button">Effacer</button></div></div>
             <div class="status" id="statusBox" role="status" aria-live="polite">Votre point de départ : un rang et quelques départements. Vous pouvez aussi essayer l’exemple.</div>
-            <details class="settingsGroup groqGroup" id="groqSettings"><summary><span><span class="spark" aria-hidden="true">✦</span> Assistant Groq</span><span class="summaryTag">IA</span></summary><div class="settingsContent">
-              <p class="fieldHint">Un second regard sur vos choix, avec le modèle disponible sur votre compte.</p>          <div class="field">
-            <label for="groqApiKey">Votre clé Groq</label>
-            <input id="groqApiKey" type="password" placeholder="gsk_..." autocomplete="off" spellcheck="false" aria-describedby="groqPrivacy" />
-            <div class="groqActions"><button id="btnScanModels" class="secondary" type="button">Actualiser les modèles</button><button id="btnTestModel" class="ghost" type="button" disabled>Tester le modèle</button></div>
-            <div id="groqStatus" class="small muted" role="status" aria-live="polite">IA facultative. La carte et les calculs fonctionnent sans clé.</div>
-            <label class="check"><input id="rememberKey" type="checkbox" /> Mémoriser la clé sur cet appareil</label>
-            <div id="groqPrivacy" class="small muted">La clé est envoyée uniquement à Groq. Par défaut, elle reste en mémoire jusqu’à la fermeture ou au rechargement de la page.</div>
           </div>
-
-
-              <div class="field"><label for="groqModel">Modèle de l’assistant</label><select id="groqModel" disabled aria-describedby="groqStatus"><option value="">Ajoutez une clé pour découvrir les modèles</option></select></div>
-            </div></details>
-          </div>
-          <div class="sidebarFooter"><span aria-hidden="true">◈</span> Vos réglages restent dans votre navigateur.</div>
+          <div class="sidebarFooter"><span aria-hidden="true">◈</span> Calculs et fiches disponibles sans clé ni IA.</div>
         </section>
 
         <section class="panel mapPanel" id="explorer" aria-labelledby="mapTitle">
           <div class="panelHeader"><div><span class="eyebrow">02 / LE CHAMP DES POSSIBLES</span><h2 id="mapTitle">Explorez la carte</h2></div><button class="btnFullscreen" type="button" data-fullscreen-target="mapPanel" aria-label="Agrandir la carte">Agrandir</button></div>
           <div class="deptSearch"><label for="deptSearch" class="searchLabel"><span aria-hidden="true">⌕</span><span class="srOnly">Ouvrir un département</span></label><input id="deptSearch" list="deptOptions" placeholder="Un département, un code…" /><datalist id="deptOptions"></datalist><button id="btnOpenDept" type="button" class="searchButton">Voir <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><select id="mapRegion" aria-label="Zone de la carte"><option value="metro">Métropole</option><option value="antilles">Antilles</option><option value="guyane">Guyane</option><option value="reunion">La Réunion</option><option value="mayotte">Mayotte</option></select></div>
           <div class="mapWrap"><div id="map"></div><div class="mapOverlay" id="mapOverlay"><span aria-hidden="true">↖</span> Sélectionnez un département pour découvrir son profil.</div></div>
-          <div class="mapFooter"><div class="mapControls"><button id="btnHeatmap" class="ghost" type="button">Carte des scores : ON</button><div class="legend"><span><i class="dot neutral"></i> Hors liste</span><span><i class="dot wished"></i> Vos vœux</span><span><i class="dot selected"></i> Sélection</span></div></div><div id="mapStatus" class="mapStatus" role="status">Chargement de la carte…</div></div>
+          <div class="mapFooter"><div class="mapActions"><button id="btnToggleWish" type="button" class="addWishButton" disabled>Choisissez un département</button><label class="mapOption"><input id="onlineBasemap" type="checkbox" /> Fond de carte en ligne</label></div><div class="mapControls"><button id="btnHeatmap" class="ghost" type="button">Carte des scores : ON</button><div class="legend"><span><i class="dot neutral"></i> Hors liste</span><span><i class="dot wished"></i> Vos vœux</span><span><i class="dot selected"></i> Sélection</span></div></div><div id="mapStatus" class="mapStatus" role="status">Chargement de la carte…</div></div>
         </section>
 
         <section class="panel dgfipPanel" id="resultats" aria-labelledby="resultsTitle">
           <div class="panelHeader"><div><span class="eyebrow">03 / VOTRE PROJECTION</span><h2 id="resultsTitle">Les pistes se dessinent.</h2></div><span class="badge" id="selectedDeptBadge">Aucun département</span></div>
-          <div class="panelBody"><div class="badges" id="badges"></div>
+          <div class="panelBody"><div class="scenarioSummary" id="scenarioSummary" role="status" aria-live="polite">Votre synthèse apparaîtra après le calcul, sans service externe.</div><div class="badges" id="badges"></div>
             <div class="kpis"><div class="kpi"><div class="t">Part cumulée du top 3</div><div class="v" id="kpiTop3">—</div><span class="kpiNote">Dans cette simulation</span></div><div class="kpi"><div class="t">Risque d’affectation d’office</div><div class="v" id="kpiOffice">—</div><span class="kpiNote">Hypothèse résiduelle</span></div><div class="kpi"><div class="t">Force du rang</div><div class="v" id="kpiRank">—</div><span class="kpiNote">Indice du simulateur</span></div><div class="kpi"><div class="t">Score du département</div><div class="v" id="kpiDeptScore">—</div><span class="kpiNote">Votre sélection actuelle</span></div></div>
             <div class="sectionTitleRow"><h3>Vos trois premières pistes</h3><span>Classement par part simulée</span></div><div class="top3" id="top3"></div>
             <details class="resultsDetails"><summary>Tous les vœux, dans le détail <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></summary><div id="allResults"></div></details>
@@ -156,28 +151,30 @@
               <div id="infoHousePrice">-</div>
             </div>
             <div class="cardMini">
-              <h4>Météo / climat indicatif</h4>
+              <h4>Repères climatiques</h4>
               <div id="infoClimate">-</div>
             </div>
           </div>
 
 
             <div class="cityHighlight" id="cityHighlight"><h4>Votre point de repère</h4><div class="small muted">Choisissez un département sur la carte.</div></div>
-            <div class="bigText territorySummary" id="infoSummary">Le cadre de vie compte aussi. Explorez un territoire pour retrouver ses villes, son climat et ses repères pratiques.</div>
+            <div class="bigText territorySummary" id="infoSummary">Le cadre de vie compte aussi. Les principales villes et leurs coordonnées sont incluses dans les fiches locales.</div>
             <div class="small muted" id="infoSources">Les données publiques disponibles sont distinguées des estimations locales.</div>
-            <div class="aiSection"><div class="aiSectionHeader"><div><span class="eyebrow"><span aria-hidden="true">✦</span> UN AUTRE REGARD</span><h3>Votre éclairage IA</h3></div><a href="#groqSettings" class="textLink" id="configureGroq">Configurer Groq <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a></div><button id="btnAnalyze" type="button" class="secondary" disabled>Analyser ce département avec Groq</button><div id="aiAnalysis" class="bigText" aria-live="polite">Connectez votre clé, choisissez votre modèle et lancez une analyse du département sélectionné.</div></div>
+            <section class="localAdviceSection" aria-labelledby="localAdviceTitle"><div class="adviceSectionHeader"><div><span class="eyebrow">LECTURE AUTOMATIQUE · SANS IA</span><h3 id="localAdviceTitle">L’essentiel pour décider</h3></div><span class="localBadge">Calcul local</span></div><div id="localAdvice" class="adviceGrid">Sélectionnez un département pour voir ses repères, atouts et points de vigilance.</div></section>
+            <details class="onlineSettings"><summary>Compléments en ligne, si vous le souhaitez</summary><label class="mapOption"><input id="onlineData" type="checkbox" /> Charger la météo, Wikipédia et les photos</label><p class="fieldHint">Facultatif : la fiche locale et les calculs sont déjà complets sans ces services.</p></details>
             <details class="metricDetails"><summary>Les indicateurs du territoire</summary><ul class="metricList" id="infoSortedMetrics"></ul></details>
             <div class="photoGrid" id="photoGrid"></div>
           </div>
         </section>
       </div>
     </main>
-    <footer class="pageFooter"><a class="brand footerBrand" href="#">souhaits<span class="brandPeriod">.</span></a><p>Un outil indépendant pour préparer la suite.<br>Simulations indicatives · Aucune affiliation à la DGFiP.</p><a href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Code ouvert <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a></footer>
+    <footer class="pageFooter"><a class="brand footerBrand" href="#">souhaits<span class="brandPeriod">.</span></a><p>Un outil indépendant pour préparer la suite.<br>Simulations indicatives · Aucune affiliation à la DGFiP.<br><span id="offlineStatus" class="offlineStatus">Application locale · Première ouverture avec connexion</span></p><a href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Code ouvert <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></a></footer>
   </div>
   <nav class="mobileNav" aria-label="Accès rapide"><a href="#preparer"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span> Mon projet</a><a href="#explorer"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/></svg></span> La carte</a><a href="#resultats"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span> Résultats</a></nav>
   <script src="./assets/vendor/leaflet/leaflet.js"></script>
   <script src="./assets/departements.js"></script>
-  <script src="./assets/groq.js?v=7.0.0"></script>
-  <script src="./assets/app.js?v=8.0.1"></script>
+  <script src="./assets/territoires.js?v=9.0.0"></script>
+  <script src="./assets/local-tools.js?v=9.0.0"></script>
+  <script src="./assets/app.js?v=9.0.0"></script>
 </body>
 </html>
