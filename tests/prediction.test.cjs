@@ -6,6 +6,7 @@ const wishes=text=>D.parse(text,T,C).wishes,run=(text,f={},imports=[])=>P.simula
 test('unité direction + département, aliases SDNC, noms composés, contradictions et agences multisites',()=>{
  const result=D.parse('44 DDFIP\n44 D44\n44 DISI Centre-Ouest\n33 SDNC\n13 SNDC\n57 DiSI Grand Est\nD44\n33 440\nLot-et-Garonne',T,C);
  assert.deepEqual(result.wishes.map(w=>w.key),['440@44','D44@44','A15@33','A15@13','D67@57','470@47']);assert.equal(result.duplicates.length,1);assert.equal(result.unknown.length,2);
+ const custom=wishes('44 nouvelle direction XYZ\n44 DDFIP');assert.equal(custom.length,2);assert.equal(custom[0].kind,'custom');assert.equal(D.parseLine(D.format(custom[0]),T,C).key,custom[0].key);
  for(const w of result.wishes)assert.equal(D.parseLine(D.format(w),T,C).key,w.key);
 });
 test('base de 127 directions vérifiée : effectifs distincts des postes et sources pour chaque fait',()=>{

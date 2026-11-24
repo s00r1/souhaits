@@ -15,7 +15,8 @@
   const specialized=catalog.filter(d=>d.kind!=='territorial').sort((a,b)=>Math.max(...b.aliases.map(a=>a.length),b.name.length)-Math.max(...a.aliases.map(a=>a.length),a.name.length));
   let agency=byId||specialized.find(d=>[d.id,d.name,...d.aliases].some(alias=>{const name=normalize(alias);return name&&(' '+text+' ').includes(' '+name+' ');}));
   if(!dept)return null; // A multi-site agency code without a department is intentionally ambiguous.
-  if(!agency&&/\b(disi|dircofi|sdnc|sndc|dns|dnef|dvni|dnid|dinr|dsfipe|dge|direction nationale|direction specialisee|service national)\b/.test(text)){
+  let remainder=text.replace(normalize(territories[dept].nom),'').replace(new RegExp('(?:^| )'+dept.toLowerCase()+'(?: |$)','g'),' ').replace(/\b(dr|ddfip|drfip|ddrfip|direction|departementale|regionale|des|finances|publiques|de|du|la|le|d|tout|emploi)\b/g,'').trim();
+  if(!agency&&(/[a-z]/.test(remainder)||/\b(disi|dircofi|sdnc|sndc|dns|dnef|dvni|dnid|dinr|dsfipe|dge|direction nationale|direction specialisee|service national)\b/.test(text))){
    const name=String(raw).replace(new RegExp('(?:^|\\s)'+dept+'(?=\\s|$)','i'),' ').trim();
    agency={id:'CUSTOM_'+normalize(name).replace(/ /g,'_').toUpperCase(),name,kind:'custom',departments:[]};
   }
@@ -33,6 +34,6 @@
   }
   return {wishes,unknown,duplicates,departments:new Set(wishes.map(w=>w.code)).size};
  }
- function format(wish){return `${wish.code} ${wish.directionCode} ${wish.nom}`;}
+ function format(wish){return wish.kind==='custom'?`${wish.code} ${wish.nom}`:`${wish.code} ${wish.directionCode} ${wish.nom}`;}
  return {normalize,department,parseLine,parse,format};
 });

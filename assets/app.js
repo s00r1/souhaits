@@ -607,7 +607,7 @@
           csEnfant: elements.csEnfant.checked,
           csSoutien: elements.csSoutien.checked,
           modeLonguenesse: elements.modeLonguenesse.checked,
-          campaign:elements.campaign.value,rankMode:elements.rankMode.value,mainSize:elements.mainSize.value,internalSize:elements.internalSize.value,priorityDept:findDeptCode(elements.priorityDept.value)||'', 
+          campaign:elements.campaign.value,rankMode:elements.rankMode.value,mainSize:elements.mainSize.value,internalSize:elements.internalSize.value,priorityDept:findDeptCode(elements.priorityDept.value)||'',
           souhaits: elements.souhaits.value
         };
       }
@@ -661,11 +661,11 @@
         animateResults();return sim.rows;
       }
       function getPredictionByCode(code){return state.departmentPredictions.find(p=>p.code===code)||null;}
-      
+
 
       function updateDgfipPanelForDept(code,name,pred){
         elements.selectedDeptBadge.textContent=code?`${code} ${name}`:'Aucun département';elements.globalDeptBadge.textContent=code?`${code} ${name}`:'—';
-        elements.kpiDeptScore.textContent=pred?pct(pred.proba):'hors simulation';
+        elements.kpiDeptScore.textContent=pred?pct(pred.proba):'—';
         if(!code){elements.dgfipDeptInfo.textContent='Choisissez un département.';return;}
         const rows=state.predictions.filter(r=>r.code===code),catalog=window.SOUHAITS_DIRECTION_CATALOG;
         const staff=window.SOUHAITS_HISTORY.staff.find(r=>catalog.find(d=>d.id===r.directionCode)?.kind==='territorial'&&catalog.find(d=>d.id===r.directionCode)?.departments[0]===code);
@@ -682,7 +682,7 @@
         const canvas=elements.radarCanvas,ctx=canvas.getContext('2d');if(!ctx)return;
         const width=canvas.clientWidth,height=canvas.clientHeight;canvas.width=width*devicePixelRatio;canvas.height=height*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);ctx.clearRect(0,0,width,height);
         const dark=document.documentElement.dataset.theme==='dark';ctx.font='12px Arial';ctx.textAlign='left';
-        ['Prudent','Central','Favorable'].forEach((label,i)=>{const y=35+i*55,value=pred?.scenarios?.[i]||0;ctx.fillStyle=dark?'#d8e9e1':'#244d45';ctx.fillText(`${label} : ${pct(value)}`,12,y);ctx.fillStyle=dark?'#294a42':'#e3eae4';ctx.fillRect(12,y+8,width-24,14);ctx.fillStyle=['#dc9c49','#258775','#6b73d6'][i];ctx.fillRect(12,y+8,(width-24)*value/100,14);});
+        ['Prudent','Central','Favorable'].forEach((label,i)=>{const y=35+i*55,value=pred?.scenarios?.[i]||0;ctx.fillStyle='#cee3d7';ctx.fillText(`${label} : ${pct(value)}`,12,y);ctx.fillStyle='rgba(206,227,215,.15)';ctx.fillRect(12,y+8,width-24,14);ctx.fillStyle=['#dc9c49','#258775','#6b73d6'][i];ctx.fillRect(12,y+8,(width-24)*value/100,14);});
       }
 
       function styleForFeature(feature){
