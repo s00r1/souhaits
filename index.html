@@ -3,87 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Souhaits V7 · Simulateur DGFiP</title>
-
+  <meta name="theme-color" content="#f4f5f0" />
+  <meta name="description" content="Un espace clair pour préparer vos vœux DGFiP, explorer les départements et comparer vos simulations." />
+  <title>Souhaits — Explorez votre prochaine étape</title>
   <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css" />
-
-  <link rel="stylesheet" href="./assets/app.css?v=7.0.1" />
+  <link rel="stylesheet" href="./assets/app.css?v=8.0.0" />
 </head>
 <body>
+  <a class="skipLink" href="#preparer">Aller au simulateur</a>
   <div class="app">
-    <header class="appHeader">
-      <div><span class="eyebrow">SIMULATEUR D’AFFECTATION</span><h1>Souhaits <span class="badge">V7</span></h1>
-      <p>Explore les départements, compare tes vœux et prépare tes choix.</p></div>
-      <a class="sourceLink" href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Code & guide ↗</a>
+    <header class="topbar">
+      <a href="#" class="brand" aria-label="Souhaits, accueil"><span class="brandMark" aria-hidden="true">✦</span>souhaits<span class="brandPeriod">.</span></a>
+      <nav class="desktopNav" aria-label="Navigation principale"><a href="#preparer">Préparer</a><a href="#explorer">Explorer</a><a href="#resultats">Comparer</a></nav>
+      <a class="sourceLink" href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Le projet <span aria-hidden="true">↗</span></a>
     </header>
-    <div class="notice">Simulation indicative, sans valeur officielle : les postes, flux et pourcentages sont des hypothèses. Les priorités administratives doivent être vérifiées auprès de la DGFiP.</div>
-    <div class="grid">
-      <!-- PARTIE 1 -->
-      <section class="panel leftPanel">
-        <div class="panelHeader">
-          <div class="panelHeaderMain">
-            <h2>1. Saisie & réglages</h2>
-            <button class="btnFullscreen" type="button" data-fullscreen-target="leftPanel">Fullscreen</button>
-          </div>
-          <span class="badge">Calcul local</span>
+
+    <main>
+      <section class="hero" aria-labelledby="heroTitle">
+        <div><div class="eyebrow"><span class="liveDot" aria-hidden="true"></span> VOS VŒUX DGFIP, EN PERSPECTIVE</div>
+          <h1 id="heroTitle">Dessinez votre<br><em>prochaine étape.</em></h1>
+          <p>Des envies, des territoires, des possibilités.<br>Un espace pour voir plus clair dans vos choix d’affectation.</p>
         </div>
-        <div class="panelBody">
-          <div class="row2">
-            <div class="field">
-              <label for="listeType">Type de liste</label>
-              <select id="listeType">
-                <option value="LC">LC</option>
-                <option value="LP">LP</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="rang">Rang</label>
-              <input id="rang" type="number" min="1" placeholder="Ex: 317" />
-            </div>
-          </div>
+        <div class="heroAside">
+          <div class="compass" aria-hidden="true"><span class="compassN">N</span><span class="compassW">O</span><span class="compassE">E</span><span class="compassS">S</span><span class="compassNeedle"></span></div>
+          <div class="heroCaption"><span class="eyebrow">À VOUS DE TRACER LA SUITE</span><a href="#explorer">Explorer les territoires <span aria-hidden="true">↘</span></a></div>
+        </div>
+      </section>
 
-          <div class="row2">
-            <div class="field">
-              <label for="groqModel">Modèle Groq</label>
-              <select id="groqModel" disabled aria-describedby="groqStatus"><option value="">Ajoute une clé pour découvrir les modèles</option></select>
-            </div>
-            <div class="field">
-              <label for="totalPostes">Base postes simulés</label>
-              <input id="totalPostes" type="number" min="100" value="790" />
-            </div>
-          </div>
+      <aside class="notice"><span class="noticeIcon" aria-hidden="true">i</span><p><strong>Un éclairage, pas une décision officielle.</strong> Les scores, flux et postes sont des hypothèses de simulation. Vérifiez les règles et priorités auprès de la DGFiP.</p><span class="edition">ÉDITION 08</span></aside>
 
-          <div class="field">
-            <label for="groqApiKey">Clé API Groq</label>
-            <input id="groqApiKey" type="password" placeholder="gsk_..." autocomplete="off" spellcheck="false" aria-describedby="groqPrivacy" />
-            <div class="groqActions"><button id="btnScanModels" class="secondary" type="button">Actualiser les modèles</button><button id="btnTestModel" class="ghost" type="button" disabled>Tester le modèle</button></div>
-            <div id="groqStatus" class="small muted" role="status" aria-live="polite">IA facultative. La carte et les calculs fonctionnent sans clé.</div>
-            <label class="check"><input id="rememberKey" type="checkbox" /> Mémoriser la clé sur cet appareil</label>
-            <div id="groqPrivacy" class="small muted">La clé est envoyée uniquement à Groq. Par défaut, elle reste en mémoire jusqu’à la fermeture ou au rechargement de la page.</div>
-          </div>
-
-          <div class="check">
+      <div class="workspaceHeading"><span>Votre espace de simulation</span><span class="workspaceHint"><span class="liveDot" aria-hidden="true"></span> Calcul local · IA facultative</span></div>
+      <div class="grid">
+        <section class="panel leftPanel" id="preparer" aria-labelledby="profileTitle">
+          <div class="panelHeader"><div><span class="eyebrow">01 / LE POINT DE DÉPART</span><h2 id="profileTitle">Votre projet</h2></div><button class="textButton" id="btnExample" type="button">Exemple</button></div>
+          <div class="panelBody">
+            <div class="formSectionLabel">Votre profil</div>
+            <div class="row2">
+              <div class="field"><label for="listeType">Type de liste</label><select id="listeType"><option value="LC">Complémentaire · LC</option><option value="LP">Principale · LP</option></select></div>
+              <div class="field"><label for="rang">Votre rang</label><input id="rang" type="number" min="1" placeholder="Ex. 317" inputmode="numeric" /></div>
+            </div>
+            <div class="field wishesField"><div class="fieldLabelRow"><label for="souhaits">Vos départements</label><span>Dans l’ordre de vos envies</span></div>
+              <textarea id="souhaits" placeholder="44 Loire-Atlantique
+17 Charente-Maritime
+31 Haute-Garonne" spellcheck="false"></textarea>
+              <p class="fieldHint">Un code ou un nom par ligne. Le premier est votre premier vœu.</p>
+            </div>
+            <details class="settingsGroup" id="prioritySettings"><summary><span>Situations & priorités</span><span class="summaryTag">Facultatif</span></summary><div class="settingsContent">          <label class="check">
             <input id="prioHandicap" type="checkbox" />
             <span>Priorité handicap / RQTH / CMI invalidité</span>
-          </div>
-          <div class="check">
+          </label>
+          <label class="check">
             <input id="prioConjoint" type="checkbox" />
             <span>Priorité rapprochement conjoint / PACS</span>
-          </div>
-          <div class="check">
+          </label>
+          <label class="check">
             <input id="csEnfant" type="checkbox" />
             <span>CS rapprochement résidence des enfants</span>
-          </div>
-          <div class="check">
+          </label>
+          <label class="check">
             <input id="csSoutien" type="checkbox" />
             <span>CS soutien de famille</span>
-          </div>
-          <div class="check">
+          </label>
+          <label class="check">
             <input id="modeLonguenesse" type="checkbox" />
             <span>Je veux aussi simuler la candidature Longuenesse (62)</span>
-          </div>
+          </label>
 
-          <div class="row3">
+</div></details>
+            <details class="settingsGroup"><summary><span>Hypothèses de calcul</span><span class="summaryTag">Avancé</span></summary><div class="settingsContent">
+              <div class="field"><label for="totalPostes">Base de postes simulés</label><input id="totalPostes" type="number" min="100" value="790" /></div>          <div class="row3">
             <div class="field">
               <label for="pondChoix">Poids ordre des vœux</label>
               <input id="pondChoix" type="number" min="0" max="5" step="0.1" value="1.2" />
@@ -98,122 +86,46 @@
             </div>
           </div>
 
-          <div class="field">
-            <label for="souhaits">Liste de souhaits</label>
-            <textarea id="souhaits" placeholder="Un département par ligne.
-Ex:
-91 Essonne
-17 Charente-Maritime
-16 Charente
-31 Haute-Garonne
-64 Pyrénées-Atlantiques"></textarea>
+</div></details>
+            <div class="formActions"><button id="btnCalc" class="primaryButton" type="button">Calculer mes perspectives <span aria-hidden="true">↗</span></button><div class="utilityActions"><button id="btnSave" type="button">Sauvegarder</button><button id="btnExport" type="button">Exporter CSV <span aria-hidden="true">↓</span></button><button id="btnReset" type="button">Effacer</button></div></div>
+            <div class="status" id="statusBox" role="status" aria-live="polite">Votre point de départ : un rang et quelques départements. Vous pouvez aussi essayer l’exemple.</div>
+            <details class="settingsGroup groqGroup" id="groqSettings"><summary><span><span class="spark" aria-hidden="true">✦</span> Assistant Groq</span><span class="summaryTag">IA</span></summary><div class="settingsContent">
+              <p class="fieldHint">Un second regard sur vos choix, avec le modèle disponible sur votre compte.</p>          <div class="field">
+            <label for="groqApiKey">Votre clé Groq</label>
+            <input id="groqApiKey" type="password" placeholder="gsk_..." autocomplete="off" spellcheck="false" aria-describedby="groqPrivacy" />
+            <div class="groqActions"><button id="btnScanModels" class="secondary" type="button">Actualiser les modèles</button><button id="btnTestModel" class="ghost" type="button" disabled>Tester le modèle</button></div>
+            <div id="groqStatus" class="small muted" role="status" aria-live="polite">IA facultative. La carte et les calculs fonctionnent sans clé.</div>
+            <label class="check"><input id="rememberKey" type="checkbox" /> Mémoriser la clé sur cet appareil</label>
+            <div id="groqPrivacy" class="small muted">La clé est envoyée uniquement à Groq. Par défaut, elle reste en mémoire jusqu’à la fermeture ou au rechargement de la page.</div>
           </div>
 
-          <div class="btns">
-            <button id="btnCalc">Calculer</button>
-            <button class="secondary" id="btnExample">Exemple</button>
-            <button class="ghost" id="btnReset">Effacer</button>
-            <button class="ghost" id="btnSave">Sauver local</button>
-            <button class="ghost" id="btnExport">Exporter les résultats CSV</button>
-          </div>
 
-          <div class="status" id="statusBox" role="status" aria-live="polite">
-            Prêt. Renseigne ton rang et tes départements, ou charge l’exemple.
+              <div class="field"><label for="groqModel">Modèle de l’assistant</label><select id="groqModel" disabled aria-describedby="groqStatus"><option value="">Ajoutez une clé pour découvrir les modèles</option></select></div>
+            </div></details>
           </div>
-        </div>
-      </section>
+          <div class="sidebarFooter"><span aria-hidden="true">◈</span> Vos réglages restent dans votre navigateur.</div>
+        </section>
 
-      <!-- PARTIE 2 -->
-      <section class="panel mapPanel">
-        <div class="panelHeader">
-          <div class="panelHeaderMain">
-            <h2>2. Carte France / départements</h2>
-            <button class="btnFullscreen" type="button" data-fullscreen-target="mapPanel">Fullscreen</button>
-          </div>
-          <div class="mapControls">
-            <button id="btnHeatmap" class="ghost" type="button">Heatmap / Carte probabilités : ON</button>
-            <div class="legend">
-              <span><i class="dot" style="background:#4f6288;"></i> neutre</span>
-              <span><i class="dot" style="background:#2f7f61;"></i> dans tes vœux</span>
-              <span><i class="dot" style="background:#5b8cff;"></i> top 3</span>
-              <span><i class="dot" style="background:#7ef0c7;"></i> sélectionné</span>
-            </div>
-          </div>
-        </div>
-        <div class="deptSearch">
-          <label for="deptSearch">Ouvrir un département</label>
-          <input id="deptSearch" list="deptOptions" placeholder="44, Loire-Atlantique…" />
-          <datalist id="deptOptions"></datalist>
-          <button id="btnOpenDept" type="button" class="secondary">Voir</button>
-          <select id="mapRegion" aria-label="Zone de la carte"><option value="metro">Métropole</option><option value="antilles">Antilles</option><option value="guyane">Guyane</option><option value="reunion">La Réunion</option><option value="mayotte">Mayotte</option></select>
-        </div>
-        <div id="mapStatus" class="small mapStatus" role="status">Chargement de la carte…</div>
-        <div class="mapWrap">
-          <div id="map"></div>
-          <div class="mapOverlay" id="mapOverlay">
-            Clique un département.  
-            Partie 3 = lecture DGFiP. Partie 4 = profil global + photos.
-          </div>
-        </div>
-      </section>
+        <section class="panel mapPanel" id="explorer" aria-labelledby="mapTitle">
+          <div class="panelHeader"><div><span class="eyebrow">02 / LE CHAMP DES POSSIBLES</span><h2 id="mapTitle">Explorez la carte</h2></div><button class="btnFullscreen" type="button" data-fullscreen-target="mapPanel" aria-label="Agrandir la carte">Agrandir ↗</button></div>
+          <div class="deptSearch"><label for="deptSearch" class="searchLabel"><span aria-hidden="true">⌕</span><span class="srOnly">Ouvrir un département</span></label><input id="deptSearch" list="deptOptions" placeholder="Un département, un code…" /><datalist id="deptOptions"></datalist><button id="btnOpenDept" type="button" class="searchButton">Voir <span aria-hidden="true">↗</span></button><select id="mapRegion" aria-label="Zone de la carte"><option value="metro">Métropole</option><option value="antilles">Antilles</option><option value="guyane">Guyane</option><option value="reunion">La Réunion</option><option value="mayotte">Mayotte</option></select></div>
+          <div class="mapWrap"><div id="map"></div><div class="mapOverlay" id="mapOverlay"><span aria-hidden="true">↖</span> Sélectionnez un département pour découvrir son profil.</div></div>
+          <div class="mapFooter"><div class="mapControls"><button id="btnHeatmap" class="ghost" type="button">Carte des scores : ON</button><div class="legend"><span><i class="dot neutral"></i> Hors liste</span><span><i class="dot wished"></i> Vos vœux</span><span><i class="dot selected"></i> Sélection</span></div></div><div id="mapStatus" class="mapStatus" role="status">Chargement de la carte…</div></div>
+        </section>
 
-      <!-- PARTIE 3 -->
-      <section class="panel dgfipPanel">
-        <div class="panelHeader">
-          <div class="panelHeaderMain">
-            <h2>3. Infos DGFiP / prédiction</h2>
-            <button class="btnFullscreen" type="button" data-fullscreen-target="dgfipPanel">Fullscreen</button>
+        <section class="panel dgfipPanel" id="resultats" aria-labelledby="resultsTitle">
+          <div class="panelHeader"><div><span class="eyebrow">03 / VOTRE PROJECTION</span><h2 id="resultsTitle">Les pistes se dessinent.</h2></div><span class="badge" id="selectedDeptBadge">Aucun département</span></div>
+          <div class="panelBody"><div class="badges" id="badges"></div>
+            <div class="kpis"><div class="kpi"><div class="t">Part cumulée du top 3</div><div class="v" id="kpiTop3">—</div><span class="kpiNote">Dans cette simulation</span></div><div class="kpi"><div class="t">Risque d’affectation d’office</div><div class="v" id="kpiOffice">—</div><span class="kpiNote">Hypothèse résiduelle</span></div><div class="kpi"><div class="t">Force du rang</div><div class="v" id="kpiRank">—</div><span class="kpiNote">Indice du simulateur</span></div><div class="kpi"><div class="t">Score du département</div><div class="v" id="kpiDeptScore">—</div><span class="kpiNote">Votre sélection actuelle</span></div></div>
+            <div class="sectionTitleRow"><h3>Vos trois premières pistes</h3><span>Classement par part simulée</span></div><div class="top3" id="top3"></div>
+            <details class="resultsDetails"><summary>Tous les vœux, dans le détail <span aria-hidden="true">↗</span></summary><div id="allResults"></div></details>
+            <div class="analysisGrid"><div class="radarBox"><div class="subTitle">Le profil en un regard</div><canvas id="radarCanvas" height="220" aria-label="Radar indicatif du département"></canvas></div><div class="departmentReading"><div class="subTitle">Comprendre cette projection</div><div class="bigText" id="dgfipDeptInfo">Sélectionnez un département pour comprendre sa place dans vos vœux.</div></div></div>
           </div>
-          <span class="badge" id="selectedDeptBadge">Aucun département</span>
-        </div>
-        <div class="panelBody">
-          <div class="badges" id="badges"></div>
+        </section>
 
-          <div class="kpis">
-            <div class="kpi">
-              <div class="t">Chance d’avoir un des 3 plus probables</div>
-              <div class="v" id="kpiTop3">-</div>
-            </div>
-            <div class="kpi">
-              <div class="t">Risque affectation d’office</div>
-              <div class="v" id="kpiOffice">-</div>
-            </div>
-            <div class="kpi">
-              <div class="t">Force de rang</div>
-              <div class="v" id="kpiRank">-</div>
-            </div>
-            <div class="kpi">
-              <div class="t">Score du département cliqué</div>
-              <div class="v" id="kpiDeptScore">-</div>
-            </div>
-          </div>
-
-          <div class="radarBox">
-            <canvas id="radarCanvas" height="180"></canvas>
-          </div>
-
-          <div class="subTitle">Top 3 de la simulation</div>
-          <div class="top3" id="top3"></div>
-
-          <details class="resultsDetails"><summary>Tous les vœux calculés</summary><div id="allResults"></div></details>
-          <div class="subTitle">Lecture DGFiP du département sélectionné</div>
-          <div class="bigText" id="dgfipDeptInfo">
-            Rien de sélectionné.
-          </div>
-        </div>
-      </section>
-
-      <!-- PARTIE 4 -->
-      <section class="panel infoPanel">
-        <div class="panelHeader">
-          <div class="panelHeaderMain">
-            <h2>4. Infos globales du département</h2>
-            <button class="btnFullscreen" type="button" data-fullscreen-target="infoPanel">Fullscreen</button>
-          </div>
-          <span class="badge" id="globalDeptBadge">-</span>
-        </div>
-        <div class="panelBody">
-          <div class="cards">
+        <section class="panel infoPanel" id="territoire" aria-labelledby="territoryTitle">
+          <div class="panelHeader"><div><span class="eyebrow">04 / AU-DELÀ DU CLASSEMENT</span><h2 id="territoryTitle">Et la vie sur place ?</h2></div><span class="badge" id="globalDeptBadge">À explorer</span></div>
+          <div class="panelBody">          <div class="cards">
             <div class="cardMini">
               <h4>Grandes villes</h4>
               <div id="infoCities">-</div>
@@ -249,32 +161,23 @@ Ex:
             </div>
           </div>
 
-          <div class="cityHighlight" id="cityHighlight">
-            <h4>Ville mise en évidence</h4>
-            <div class="small muted">Aucune ville sélectionnée.</div>
+
+            <div class="cityHighlight" id="cityHighlight"><h4>Votre point de repère</h4><div class="small muted">Choisissez un département sur la carte.</div></div>
+            <div class="bigText territorySummary" id="infoSummary">Le cadre de vie compte aussi. Explorez un territoire pour retrouver ses villes, son climat et ses repères pratiques.</div>
+            <div class="small muted" id="infoSources">Les données publiques disponibles sont distinguées des estimations locales.</div>
+            <div class="aiSection"><div class="aiSectionHeader"><div><span class="eyebrow"><span aria-hidden="true">✦</span> UN AUTRE REGARD</span><h3>Votre éclairage IA</h3></div><a href="#groqSettings" class="textLink" id="configureGroq">Configurer Groq ↗</a></div><button id="btnAnalyze" type="button" class="secondary" disabled>Analyser ce département avec Groq</button><div id="aiAnalysis" class="bigText" aria-live="polite">Connectez votre clé, choisissez votre modèle et lancez une analyse du département sélectionné.</div></div>
+            <details class="metricDetails"><summary>Les indicateurs du territoire</summary><ul class="metricList" id="infoSortedMetrics"></ul></details>
+            <div class="photoGrid" id="photoGrid"></div>
           </div>
-
-          <div class="small muted" id="infoSources">Profil local indicatif. Les données publiques complètent la fiche quand elles sont disponibles.</div>
-          <div class="bigText" id="infoSummary">
-            Clique un département pour voir le résumé global.
-          </div>
-
-          <div class="subTitle">Analyse IA facultative</div>
-          <button id="btnAnalyze" type="button" class="secondary" disabled>Analyser ce département avec Groq</button>
-          <div id="aiAnalysis" class="bigText" aria-live="polite">Sélectionne un département et un modèle pour lancer une analyse.</div>
-
-          <ul class="metricList" id="infoSortedMetrics"></ul>
-
-          <div class="photoGrid" id="photoGrid"></div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
+    <footer class="pageFooter"><a class="brand footerBrand" href="#">souhaits<span class="brandPeriod">.</span></a><p>Un outil indépendant pour préparer la suite.<br>Simulations indicatives · Aucune affiliation à la DGFiP.</p><a href="https://github.com/s00r1/souhaits" target="_blank" rel="noopener noreferrer">Code ouvert <span aria-hidden="true">↗</span></a></footer>
   </div>
-
+  <nav class="mobileNav" aria-label="Accès rapide"><a href="#preparer"><span aria-hidden="true">≡</span> Mon projet</a><a href="#explorer"><span aria-hidden="true">⌖</span> La carte</a><a href="#resultats"><span aria-hidden="true">↗</span> Résultats</a></nav>
   <script src="./assets/vendor/leaflet/leaflet.js"></script>
-
   <script src="./assets/departements.js"></script>
   <script src="./assets/groq.js?v=7.0.0"></script>
-  <script src="./assets/app.js?v=7.0.1"></script>
+  <script src="./assets/app.js?v=8.0.0"></script>
 </body>
 </html>

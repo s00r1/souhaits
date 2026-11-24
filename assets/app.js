@@ -124,8 +124,8 @@
       ];
 
       const HEATMAP_COLORS = [
-        "#8f1f2c", "#cb3e3f", "#e66d45", "#f39b3f", "#f8c04d",
-        "#f0df67", "#a6de67", "#73c95e", "#46ad52", "#2f8f45", "#1a6e3a"
+        "#e4d5ad", "#d8d3a1", "#c8ce96", "#b4c58b", "#9dbd84",
+        "#83b382", "#67a680", "#4d9579", "#35816b", "#226f5b", "#155b49"
       ];
 
       const aliases = {
@@ -487,10 +487,10 @@
         const scale = state.heatmapScale || { min:0, max:100, median:50, total:0 };
 
         return `
-          <h4>Carte probabilités (classement relatif)</h4>
+          <h4>Vos scores, en perspective</h4>
           <div class="scale" style="background:${gradient};"></div>
-          <div class="ticks"><span>Moins probable</span><span>Médiane</span><span>Plus probable</span></div>
-          <div class="small muted">Proba: ${formatLegendPct(scale.min)} → ${formatLegendPct(scale.max)} (médiane ${formatLegendPct(scale.median)})</div>
+          <div class="ticks"><span>Plus faible</span><span>Médiane</span><span>Plus élevé</span></div>
+          <div class="small muted">Parts simulées : ${formatLegendPct(scale.min)} → ${formatLegendPct(scale.max)} (médiane ${formatLegendPct(scale.median)})</div>
           <div class="small muted">${scale.total || 0} département(s) classé(s) sur la liste</div>
           <div class="missing"><span class="chip"></span>département non présent</div>
         `;
@@ -517,7 +517,7 @@
 
       function updateHeatmapUi(){
         elements.btnHeatmap.classList.toggle("active", state.heatmapEnabled);
-        elements.btnHeatmap.textContent = `Heatmap / Carte probabilités : ${state.heatmapEnabled ? "ON" : "OFF"}`;
+        elements.btnHeatmap.textContent = `Scores simulés : ${state.heatmapEnabled ? "ON" : "OFF"}`;
       }
 
       function toggleHeatmap(){
@@ -544,7 +544,7 @@
           const panel = targetClass ? document.querySelector(`.${targetClass}`) : null;
           const isActive = !!panel && panel === activePanel;
           btn.classList.toggle("active", isActive);
-          btn.textContent = isActive ? "Quitter fullscreen" : "Fullscreen";
+          btn.textContent = isActive ? "Réduire ↙" : "Agrandir ↗";
         });
       }
 
@@ -1233,11 +1233,12 @@
 
         elements.top3.innerHTML = top3.map((r, i) => `
           <button type="button" class="topCard" data-dept="${r.code}">
-            <h3>#${i+1} · ${r.code} ${r.nom}</h3>
-            <div class="pct">${pct(r.proba)}</div>
+            <span class="rank">PISTE 0${i+1} <span aria-hidden="true">↗</span></span>
+            <h3>${r.code} · ${r.nom}</h3>
+            <div class="pct">${pct(r.proba)}</div><span class="scoreCaption">Part simulée</span>
             <div class="bar"><span style="width:${clamp(r.proba,0,100)}%"></span></div>
             <div class="small muted">
-              vœu n°${r.ordre} · chance cond. ${pct(r.conditionalChance)} · demande ${Math.round(r.demand*100)}/100 · capacité ${Math.round(r.capacity*100)}/100 · pression flux ${Math.round(r.flowPressure*100)}/100 · ambition ${Math.round(r.ambition*100)}/100${r.occurrenceCount > 1 ? ` · ${r.occurrenceCount} occurrences (rangs ${r.occurrenceOrders.join(", ")})` : ""}
+              Votre vœu n°${r.ordre} dans la liste.
             </div>
           </button>
         `).join("");
@@ -1257,7 +1258,7 @@
           drawRadar(null);
         }
 
-        setStatus(`Simulation V7 : ${wishes.length} départements analysés. Risque d’office simulé : ${pct(officeRisk)}. ${state.inputWarnings || ""}`);
+        setStatus(`Simulation V8 : ${wishes.length} départements analysés. Risque d’office simulé : ${pct(officeRisk)}. ${state.inputWarnings || ""}`);
         return aggregatedResults;
       }
 
@@ -1349,7 +1350,7 @@
           clamp((pred.security || 0) / 0.25, 0, 1),
           clamp(pred.quality || 0.5, 0, 1),
           clamp(pred.demand || 0.5, 0, 1)
-        ] : [0.35,0.45,0.30,0.5,0.5];
+        ] : [0,0,0,0,0];
 
         for(let ring=1; ring<=5; ring++){
           ctx.beginPath();
@@ -1361,7 +1362,7 @@
             if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
           }
           ctx.closePath();
-          ctx.strokeStyle = "rgba(120,150,220,.18)";
+          ctx.strokeStyle = "rgba(185,216,183,.16)";
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -1373,12 +1374,12 @@
           ctx.beginPath();
           ctx.moveTo(cx,cy);
           ctx.lineTo(x,y);
-          ctx.strokeStyle = "rgba(120,150,220,.18)";
+          ctx.strokeStyle = "rgba(185,216,183,.16)";
           ctx.stroke();
 
           const lx = cx + Math.cos(angle) * (radius + 22);
           const ly = cy + Math.sin(angle) * (radius + 18);
-          ctx.fillStyle = "#9ab0d8";
+          ctx.fillStyle = "#9fbea7";
           ctx.font = "12px Inter, Arial";
           ctx.textAlign = "center";
           ctx.fillText(labels[i], lx, ly);
@@ -1393,8 +1394,8 @@
           if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
         }
         ctx.closePath();
-        ctx.fillStyle = "rgba(98,229,160,.18)";
-        ctx.strokeStyle = "rgba(110,240,194,.95)";
+        ctx.fillStyle = "rgba(175,208,145,.20)";
+        ctx.strokeStyle = "rgba(191,219,159,.95)";
         ctx.lineWidth = 2;
         ctx.fill();
         ctx.stroke();
@@ -1405,34 +1406,34 @@
         const pred = getPredictionByCode(code);
         const isSelected = state.selectedDeptCode === code;
 
-        let fill = "#57637d";
+        let fill = "#d1ddc9";
         let weight = 1;
-        let color = "#6f84b0";
-        let fillOpacity = 0.48;
+        let color = "#7e9578";
+        let fillOpacity = 0.42;
 
         if(state.heatmapEnabled){
           if(pred){
             fill = heatmapColorForDept(code, pred.proba);
-            color = "#d4ddf3";
+            color = "#68866b";
             fillOpacity = clamp(0.38 + pred.proba / 180, 0.40, 0.84);
           }
         } else {
           if(pred){
-            fill = "#2f7f61";
+            fill = "#80ab8c";
             fillOpacity = clamp(0.25 + pred.proba / 24, 0.28, 0.78);
-            color = "#7dc8ae";
+            color = "#39775a";
           }
 
           const sorted = [...state.predictions].sort((a,b)=>b.proba-a.proba).slice(0,3).map(x=>x.code);
           if(sorted.includes(code)){
-            fill = "#355fd1";
-            color = "#8cb6ff";
+            fill = "#176b57";
+            color = "#124d3b";
             fillOpacity = 0.68;
           }
         }
 
         if(isSelected){
-          color = "#dffff5";
+          color = "#0e503b";
           weight = 2.2;
           fillOpacity = clamp(fillOpacity + 0.1, 0.50, 0.90);
         }
@@ -1474,7 +1475,7 @@
         syncAnalyzeButton();
         updateMapStyling();
 
-        elements.mapOverlay.textContent = `${code} ${name} sélectionné. Partie 3 = lecture DGFiP. Partie 4 = profil global + photos.`;
+        elements.mapOverlay.textContent = `${code} · ${name}. Retrouvez sa projection et son cadre de vie ci-dessous.`;
       }
 
       function buildSortedMetrics(meta, pred, metrics, cityData){
@@ -1649,7 +1650,7 @@
 
             layer.on("mouseover", () => {
               if(state.selectedDeptCode !== code){
-                layer.setStyle({ weight: 2, color:"#cfe2ff" });
+                layer.setStyle({ weight: 2, color:"#176b57" });
               }
             });
 
@@ -1673,6 +1674,7 @@
           const marker = L.marker(coords, {
             icon,
             interactive: false,
+            keyboard: false,
             deptCode: code
           }).addTo(state.map);
 
@@ -2019,8 +2021,14 @@
         drawRadar(getPredictionByCode(state.selectedDeptCode));
       });
 
+      document.getElementById("configureGroq")?.addEventListener("click", () => {
+        const details = document.getElementById("groqSettings");
+        if(details) details.open = true;
+      });
       loadLocal();
+      if(elements.groqApiKey.value.trim()) document.getElementById("groqSettings").open = true;
       initDepartmentSearch();
+      drawRadar(null);
       if(elements.groqApiKey.value.trim()) scanModels();
       updateHeatmapUi();
       updateFullscreenButtons();

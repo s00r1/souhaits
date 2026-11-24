@@ -1,10 +1,14 @@
-# Souhaits V7 — Simulateur DGFiP
+# Souhaits V8 — Simulateur DGFiP
 
 [Ouvrir le site](https://s00r1.github.io/souhaits/)
 
 Comparez une liste de départements, explorez une carte et obtenez une analyse facultative avec votre clé Groq.
 
 **Outil personnel non officiel.** Les flux, postes, prix et pourcentages du moteur sont des hypothèses historiques non vérifiées. Ils ne prédisent pas une décision réelle de la DGFiP. Les priorités et règles d’affectation doivent être vérifiées auprès de l’administration. Le modèle IA ne remplace pas les règles officielles.
+
+## Nouvelle interface V8
+
+Une présentation claire inspirée d’un atlas : fond ivoire, encre vert sombre, carte désaturée et scores en camaïeu. Le parcours commence par le profil et les vœux ; situations, hypothèses et assistant Groq sont organisés en panneaux repliables. Sur mobile, une barre fixe permet de rejoindre le projet, la carte et les résultats. La vue des résultats regroupe les indicateurs, les trois premières pistes et l’explication du département. Navigation clavier, contrastes, affichage d’impression et réduction des animations sont pris en compte.
 
 ## Utilisation
 
@@ -19,7 +23,7 @@ Les lignes inconnues sont signalées. Un département répété ne compte qu’u
 ## Groq : découvrir et choisir un modèle réel
 
 1. Créez une clé sur la [console Groq](https://console.groq.com/keys).
-2. Collez-la dans le champ de l’application : le catalogue est automatiquement récupéré via `GET https://api.groq.com/openai/v1/models`. **Actualiser les modèles** relance cette découverte.
+2. Ouvrez **Assistant Groq**, puis collez-la dans le champ de l’application : le catalogue est automatiquement récupéré via `GET https://api.groq.com/openai/v1/models`. **Actualiser les modèles** relance cette découverte.
 3. Sélectionnez un identifiant retourné par l’API. Les modèles de texte connus pour l’analyse sont classés dans **Conseillés pour Souhaits**. Les autres candidats sont proposés séparément et les modèles audio, de transcription, de modération ou d’embeddings sont exclus.
 4. **Tester le modèle** fait un court appel à Chat Completions pour confirmer l’accès réel de cette clé. La liste de modèles ne garantit pas à elle seule les permissions d’inférence du projet ou le quota disponible.
 5. Sélectionnez un département, puis cliquez sur **Analyser ce département avec Groq**. L’analyse utilise exactement le modèle choisi. Elle est affichée séparément des données publiques et ne remplace pas les faits par des chiffres générés.

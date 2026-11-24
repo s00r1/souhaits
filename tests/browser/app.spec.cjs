@@ -26,7 +26,7 @@ test('coller une clé découvre les vrais identifiants et transmet le modèle s�
   selected=route.request().postDataJSON().model;
   return route.fulfill({json:{choices:[{message:{content:'Analyse test fournie par Groq.'}}]}});
  });
- await page.goto('/');await page.locator('#groqApiKey').fill('fixture-key');
+ await page.goto('/');await page.locator('#groqSettings > summary').click();await page.locator('#groqApiKey').fill('fixture-key');
  await expect(page.locator('#groqModel')).toBeEnabled();await expect(page.locator('#groqModel option')).toHaveCount(2);
  await page.locator('#groqModel').selectOption('llama-3.1-8b-instant');
  await page.locator('#deptSearch').fill('44');await page.locator('#btnOpenDept').click();await page.locator('#btnAnalyze').click();
@@ -35,6 +35,6 @@ test('coller une clé découvre les vrais identifiants et transmet le modèle s�
 });
 test('une erreur Groq ne bloque pas les calculs',async({page})=>{
  await page.route('https://api.groq.com/openai/v1/models',route=>route.fulfill({status:401,json:{error:{message:'bad key'}}}));
- await page.goto('/');await page.locator('#groqApiKey').fill('bad-key');await expect(page.locator('#groqStatus')).toContainText('invalide');
+ await page.goto('/');await page.locator('#groqSettings > summary').click();await page.locator('#groqApiKey').fill('bad-key');await expect(page.locator('#groqStatus')).toContainText('invalide');
  await page.locator('#btnExample').click();await expect(page.locator('#statusBox')).toContainText('24 départements');
 });
