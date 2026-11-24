@@ -1296,7 +1296,7 @@
         txt += `malus d’ambition <strong>${Math.round((pred?.ambition ?? 0) * 100)}/100</strong>, `;
         const flowStats = pred?.flowStats || getDeptFlowStats(code);
         txt += `tension besoins <strong>${Math.round((meta.tension || 0.5) * 100)}/100</strong>. `;
-        txt += `Flux historiques codés en dur : <strong>${flowStats.postesMoyens}</strong> postes moyens (${flowStats.tendancePostes >= 0 ? "+" : ""}${flowStats.tendancePostes}), `;
+        txt += `Hypothèses locales de flux (non officielles) : <strong>${flowStats.postesMoyens}</strong> postes moyens (${flowStats.tendancePostes >= 0 ? "+" : ""}${flowStats.tendancePostes}), `;
         txt += `<strong>${flowStats.demandesMoyennes}</strong> demandes moyennes (${flowStats.tendanceDemandes >= 0 ? "+" : ""}${flowStats.tendanceDemandes}). `;
 
         if(pred && pred.security > 0.08){
@@ -1561,6 +1561,14 @@
         elements.infoSources.textContent = realData
           ? `Sources disponibles : ${[realData.communes?.length ? "API géographique de l’État" : null, realData.weather ? "Open-Meteo (prévisions)" : null, realData.wikiDept ? "Wikipédia (résumé)" : null].filter(Boolean).join(" · ") || "aucune API externe : profil local affiché"}. Prix, distances et simulation : hypothèses locales.`
           : "Profil local affiché immédiatement. Recherche des données publiques en cours…";
+        if(realData?.wikiDept){
+          const attribution = document.createElement("a");
+          attribution.href = `https://fr.wikipedia.org/wiki/${encodeURIComponent(realData.wikiDept.title || name)}`;
+          attribution.textContent = " Lire le résumé original sur Wikipédia (CC BY-SA).";
+          attribution.target = "_blank"; attribution.rel = "noopener noreferrer";
+          attribution.style.color = "var(--accent)";
+          elements.infoSources.append(attribution);
+        }
         if(refresh){
           // Independent tasks: photos and weather never block the initial profile or Groq.
           loadWikimediaPhotos(name, requestId);
