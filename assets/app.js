@@ -1380,9 +1380,10 @@
           const lx = cx + Math.cos(angle) * (radius + 22);
           const ly = cy + Math.sin(angle) * (radius + 18);
           ctx.fillStyle = "#9fbea7";
-          ctx.font = "12px Inter, Arial";
+          ctx.font = `${canvas.clientWidth < 260 ? 10 : 12}px Inter, Arial`;
           ctx.textAlign = "center";
-          ctx.fillText(labels[i], lx, ly);
+          const halfLabel = ctx.measureText(labels[i]).width / 2 + 4;
+          ctx.fillText(labels[i], clamp(lx, halfLabel, canvas.clientWidth - halfLabel), ly);
         }
 
         ctx.beginPath();
