@@ -30,7 +30,7 @@ La clé est transmise uniquement à `api.groq.com`, dans un en-tête d’autoris
 
 ## Carte et données
 
-Leaflet et les contours des **101 départements** sont inclus dans le dépôt : leur chargement ne dépend pas d’un CDN ou d’une API géographique. Les fonds de carte CARTO restent facultatifs et nécessitent Internet. Les contours demeurent cliquables sans ces tuiles.
+Leaflet et les contours des **101 départements** sont inclus dans le dépôt : leur chargement ne dépend pas d’un CDN ou d’une API géographique. Les fonds de carte OpenStreetMap restent facultatifs et nécessitent Internet. Les contours demeurent cliquables sans ces tuiles.
 
 Le profil local apparaît immédiatement. Les communes/populations et positions réelles proviennent de l’API géographique de l’État ; les prévisions sur 7 jours d’Open-Meteo ; les résumés et photos de Wikipédia/Wikimedia Commons. Ces services ont un délai limite et restent facultatifs. La fiche précise les sources effectivement disponibles. Les marqueurs de villes utilisent de vraies coordonnées ; aucune position n’est inventée. Les prix, distances et autres données locales restent des estimations identifiées.
 

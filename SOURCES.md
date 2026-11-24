@@ -6,7 +6,7 @@
 - Producteur : Etalab / services de l’État. Licence Ouverte / Open Licence 2.0 : https://www.etalab.gouv.fr/licence-ouverte-open-licence/
 - Copie récupérée le 24 novembre 2026, limitée aux 101 départements (collectivités exclues), géométries simplifiées à une tolérance de 0,008 degré avec conservation de topologie, coordonnées arrondies à 5 décimales. Cette simplification est destinée à la visualisation, pas à un usage cadastral.
 - **Leaflet 1.9.4** : https://leafletjs.com/ — BSD-2-Clause, texte dans `assets/vendor/leaflet/LICENSE`.
-- **Fond CARTO / OpenStreetMap** : https://carto.com/attributions et https://www.openstreetmap.org/copyright — attribution affichée dans la carte. Les tuiles ne sont pas embarquées.
+- **Fond OpenStreetMap** : https://www.openstreetmap.org/copyright et https://operations.osmfoundation.org/policies/tiles/ — attribution affichée dans la carte. Les tuiles ne sont pas embarquées.
 
 ## Enrichissements facultatifs
 
