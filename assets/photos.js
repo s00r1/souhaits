@@ -16,10 +16,11 @@
  }
  async function loadDepartment({code,name,cities=[]},options={}){
   if(CACHE.has(code))return CACHE.get(code);
-  const city=cities[0]?.nom||name;
-  const queries=[`"${city}" château filetype:bitmap`,`"${city}" panorama filetype:bitmap`,`"${name}" paysage filetype:bitmap`,`"${city}" monument filetype:bitmap`];
+  const city=cities[0]?.nom||name,context=String(code).startsWith('97')||code==='93'?` "${name}"`:'';
+  const queries=[`intitle:"${city}"${context} château filetype:bitmap`,`intitle:"${city}"${context} panorama filetype:bitmap`,`"${name}" paysage filetype:bitmap`,`intitle:"${city}"${context} monument filetype:bitmap`];
   const first=await Promise.allSettled(queries.map(query=>request({generator:'search',gsrsearch:query,gsrnamespace:'6',gsrlimit:'18'},options)));
-  let found=first.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+  const groups=first.filter(r=>r.status==='fulfilled').map(r=>r.value);let found=[];
+  for(let i=0;i<Math.max(0,...groups.map(g=>g.length));i++)for(const group of groups)if(group[i])found.push(group[i]);
   if(found.length<3&&!options.signal?.aborted){
    const coords=cities[0]?.centre?.coordinates;
    if(coords)try{found.push(...await request({generator:'geosearch',ggscoord:`${coords[1]}|${coords[0]}`,ggsradius:'10000',ggsnamespace:'6',ggslimit:'18'},options));}catch(_error){}
