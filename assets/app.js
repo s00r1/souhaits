@@ -544,7 +544,7 @@
           const panel = targetClass ? document.querySelector(`.${targetClass}`) : null;
           const isActive = !!panel && panel === activePanel;
           btn.classList.toggle("active", isActive);
-          btn.textContent = isActive ? "Réduire ↙" : "Agrandir ↗";
+          btn.textContent = isActive ? "Réduire" : "Agrandir";
         });
       }
 
@@ -1233,7 +1233,7 @@
 
         elements.top3.innerHTML = top3.map((r, i) => `
           <button type="button" class="topCard" data-dept="${r.code}">
-            <span class="rank">PISTE 0${i+1} <span aria-hidden="true">↗</span></span>
+            <span class="rank">PISTE 0${i+1} <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span></span>
             <h3>${r.code} · ${r.nom}</h3>
             <div class="pct">${pct(r.proba)}</div><span class="scoreCaption">Part simulée</span>
             <div class="bar"><span style="width:${clamp(r.proba,0,100)}%"></span></div>
