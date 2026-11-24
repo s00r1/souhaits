@@ -1,0 +1,27 @@
+{
+  "name": "souhaits",
+  "version": "7.0.0",
+  "description": "Simulateur indicatif de vœux DGFiP avec carte départementale et analyse Groq facultative",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:browser": "playwright test",
+    "start": "python3 -m http.server 4173"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/s00r1/souhaits.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/s00r1/souhaits/issues"
+  },
+  "homepage": "https://github.com/s00r1/souhaits#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "jsdom": "^31.0.1"
+  },
+  "private": true
+}
