@@ -34,14 +34,16 @@ Les résultats utilisent des repères colorés et des textes explicites : top 3,
 
 ## Fonctionnement autonome et hors connexion
 
-Par défaut, **aucune requête vers un service tiers** n’est nécessaire : même la carte utilise ses contours embarqués, sans fond de tuiles distant. Les 101 fiches comprennent les principales communes, leurs populations et leurs coordonnées, ainsi que la région, une population agrégée et une densité calculée.
+Les calculs, fiches et contours ne nécessitent aucun service tiers. Les photos sont recherchées automatiquement à la sélection ; décochez **Photos automatiques** pour désactiver ces requêtes. La carte utilise ses contours embarqués, sans fond de tuiles distant. Les 101 fiches comprennent les principales communes, leurs populations et leurs coordonnées, ainsi que la région, une population agrégée et une densité calculée.
 
 Après une première ouverture sur HTTPS et la mise en cache, le pied de page affiche **Application prête hors connexion**. La page peut alors être rechargée sans réseau. Cela dépend du support des service workers et du stockage disponible dans le navigateur. Les contrôles restent utilisables si ce stockage est bloqué ; seule la sauvegarde persistante ou le cache peuvent être indisponibles.
+
+Les photos sont récupérées automatiquement via Wikimedia Commons, avec recherche par département, par ville et par proximité géographique si nécessaire, filtrage des cartes/logos, légendes et crédits. Elles nécessitent Internet mais ne bloquent jamais la fiche locale.
 
 Deux options explicites restent disponibles :
 
 - **Fond de carte en ligne** : tuiles OpenStreetMap, chargées uniquement sur activation.
-- **Compléments en ligne** : météo, Wikipédia et photos, chargés uniquement sur activation. Une panne n’empêche pas l’utilisation des fiches locales. Désactiver l’option empêche une réponse tardive de modifier la fiche.
+- **Compléments en ligne** : météo et Wikipédia, chargés uniquement sur activation. Une panne n’empêche pas l’utilisation des fiches locales. Désactiver l’option empêche une réponse tardive de modifier la fiche.
 
 Les tuiles et contenus de tiers ne sont pas préchargés par le cache hors connexion. Sans Internet, les photos et la météo en direct ne sont pas disponibles ; les fonctions locales restent opérationnelles.
 

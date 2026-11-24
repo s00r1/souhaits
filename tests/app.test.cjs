@@ -16,10 +16,11 @@ function boot({saved,fetchImpl,noLeaflet=false,blockedStorage=false,theme,system
  w.fetch=(...args)=>{calls.push(args);return fetchImpl?fetchImpl(...args):Promise.reject(new TypeError('offline'));};
  if(saved)w.localStorage.setItem(storageKey,JSON.stringify(saved));if(theme)w.localStorage.setItem('souhaits_theme_v1',theme);
  if(blockedStorage)Object.defineProperty(w,'localStorage',{get(){throw new Error('blocked');}});
- for(const file of ['assets/theme.js','assets/vendor/leaflet/leaflet.js','assets/departements.js','assets/territoires.js','assets/local-tools.js','assets/app.js']){
+ for(const file of ['assets/theme.js','assets/vendor/leaflet/leaflet.js','assets/departements.js','assets/territoires.js','assets/local-tools.js','assets/photos.js','assets/app.js']){
   if(noLeaflet&&file.includes('leaflet.js'))continue;w.eval(fs.readFileSync(path.join(root,file),'utf8'));
  }
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
+ w.document.getElementById('autoPhotos').checked=false;
  const el=id=>w.document.getElementById(id),click=id=>el(id).click(),change=id=>el(id).dispatchEvent(new w.Event('change'));
  return {w,el,click,change,calls,errors,mediaListeners,close:()=>w.close()};
 }
@@ -77,7 +78,7 @@ test('clair/sombre/auto se sauvegardent et restent fonctionnels même si le stoc
 test('les compléments externes sont opt-in et une réponse tardive ne remplace pas une fiche après désactivation',async()=>{
  const pending=[];const app=boot({fetchImpl:(url)=>new Promise(resolve=>pending.push({url,resolve}))});try{
   app.el('deptSearch').value='44';app.click('btnOpenDept');assert.equal(pending.length,0);
-  app.el('onlineData').checked=true;app.change('onlineData');assert.equal(pending.length,3);
+  app.el('onlineData').checked=true;app.change('onlineData');assert.equal(pending.length,2);
   app.el('onlineData').checked=false;app.change('onlineData');
   for(const request of pending)request.resolve(reply(request.url.includes('wikipedia')?{title:'Bad',extract:'STALE TEXT'}:{}));
   await delay(20);assert.doesNotMatch(app.el('infoSummary').textContent,/STALE TEXT/);assert.match(app.el('infoCities').textContent,/Nantes/);assert.equal(app.el('photoGrid').children.length,0);

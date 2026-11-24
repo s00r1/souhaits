@@ -7,9 +7,9 @@
   <meta name="description" content="Un espace clair pour préparer vos vœux DGFiP, explorer les départements et comparer vos simulations." />
   <title>Souhaits — Votre simulateur autonome</title>
   <link rel="manifest" href="./manifest.webmanifest" />
-  <script src="./assets/theme.js?v=9.0.0"></script>
+  <script src="./assets/theme.js?v=9.0.1"></script>
   <link rel="stylesheet" href="./assets/vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="./assets/app.css?v=9.0.0" />
+  <link rel="stylesheet" href="./assets/app.css?v=9.0.1" />
 </head>
 <body>
   <a class="skipLink" href="#preparer">Aller au simulateur</a>
@@ -161,9 +161,9 @@
             <div class="bigText territorySummary" id="infoSummary">Le cadre de vie compte aussi. Les principales villes et leurs coordonnées sont incluses dans les fiches locales.</div>
             <div class="small muted" id="infoSources">Les données publiques disponibles sont distinguées des estimations locales.</div>
             <section class="localAdviceSection" aria-labelledby="localAdviceTitle"><div class="adviceSectionHeader"><div><span class="eyebrow">LECTURE AUTOMATIQUE · SANS IA</span><h3 id="localAdviceTitle">L’essentiel pour décider</h3></div><span class="localBadge">Calcul local</span></div><div id="localAdvice" class="adviceGrid">Sélectionnez un département pour voir ses repères, atouts et points de vigilance.</div></section>
-            <details class="onlineSettings"><summary>Compléments en ligne, si vous le souhaitez</summary><label class="mapOption"><input id="onlineData" type="checkbox" /> Charger la météo, Wikipédia et les photos</label><p class="fieldHint">Facultatif : la fiche locale et les calculs sont déjà complets sans ces services.</p></details>
+            <details class="onlineSettings"><summary>Compléments en ligne, si vous le souhaitez</summary><label class="mapOption"><input id="onlineData" type="checkbox" /> Charger la météo et Wikipédia</label><p class="fieldHint">Facultatif : la fiche locale et les calculs sont déjà complets sans ces services.</p></details>
             <details class="metricDetails"><summary>Les indicateurs du territoire</summary><ul class="metricList" id="infoSortedMetrics"></ul></details>
-            <div class="photoGrid" id="photoGrid"></div>
+            <section class="departmentPhotos"><div class="photoSectionHeader"><h3>Le département en images</h3><label class="mapOption"><input id="autoPhotos" type="checkbox" checked /> Photos automatiques</label></div><div id="photoStatus" class="fieldHint" role="status">Paysages et monuments se chargent dès la sélection d’un département.</div><div class="photoGrid" id="photoGrid"></div><button id="btnReloadPhotos" class="textButton" type="button" disabled>Rechercher des photos</button></section>
           </div>
         </section>
       </div>
@@ -173,8 +173,9 @@
   <nav class="mobileNav" aria-label="Accès rapide"><a href="#preparer"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span> Mon projet</a><a href="#explorer"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/></svg></span> La carte</a><a href="#resultats"><span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M5 5h14v14"/></svg></span> Résultats</a></nav>
   <script src="./assets/vendor/leaflet/leaflet.js"></script>
   <script src="./assets/departements.js"></script>
-  <script src="./assets/territoires.js?v=9.0.0"></script>
-  <script src="./assets/local-tools.js?v=9.0.0"></script>
-  <script src="./assets/app.js?v=9.0.0"></script>
+  <script src="./assets/territoires.js?v=9.0.1"></script>
+  <script src="./assets/local-tools.js?v=9.0.1"></script>
+  <script src="./assets/photos.js?v=9.0.1"></script>
+  <script src="./assets/app.js?v=9.0.1"></script>
 </body>
 </html>

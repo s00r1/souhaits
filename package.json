@@ -1,6 +1,6 @@
 {
   "name": "souhaits",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "description": "Simulateur local de vœux DGFiP : carte, fiches, synthèses, thèmes et listes de test, sans IA",
   "scripts": {
     "test": "node --test tests/*.test.cjs",

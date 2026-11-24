@@ -60,11 +60,12 @@
         cityHighlight: document.getElementById("cityHighlight"),
         infoSortedMetrics: document.getElementById("infoSortedMetrics"),
         infoSummary: document.getElementById("infoSummary"),
-        photoGrid: document.getElementById("photoGrid"),
+        photoGrid: document.getElementById("photoGrid"), autoPhotos:document.getElementById("autoPhotos"), photoStatus:document.getElementById("photoStatus"), btnReloadPhotos:document.getElementById("btnReloadPhotos"),
         radarCanvas: document.getElementById("radarCanvas")
       };
 
       const state = {
+        photoController:null,
         basemap: null,
         map: null,
         geojsonLayer: null,
@@ -1349,6 +1350,7 @@
       }
 
       function handleDeptClick(code, name){
+        state.photoController?.abort();
         state.selectedDeptCode = code;
         state.selectedDeptName = name;
         state.selectedDeptRequestId += 1;
@@ -1437,41 +1439,31 @@
         renderLocalAdvice(meta,pred,local);
         elements.infoSortedMetrics.innerHTML=buildSortedMetrics(meta,pred,metrics,cityData).map(m=>`<li><span><strong>${escapeHtml(m.label)}</strong><br><span class="muted">${escapeHtml(m.desc)}</span></span><span>${safeNum(m.value,0).toLocaleString("fr-FR")}${m.unit}</span></li>`).join("");
         if(refresh&&elements.onlineData.checked){
-          loadWikimediaPhotos(name,requestId);
           buildRealDepartmentData(code,name).then(real=>{if(!isObsolete())updateGlobalInfo(code,name,getPredictionByCode(code),requestId,real,false);}).catch(()=>{});
-        }else if(!elements.onlineData.checked)elements.photoGrid.replaceChildren();
+        }
+        elements.btnReloadPhotos.disabled=false;
+        if(refresh){if(elements.autoPhotos.checked)loadDepartmentPhotos(code,name,requestId);else{elements.photoGrid.replaceChildren();elements.photoStatus.textContent='Photos automatiques désactivées. La fiche reste disponible.';}}
       }
 
-      async function loadWikimediaPhotos(name, requestId){
-        const isObsolete = () => requestId !== state.selectedDeptRequestId || !elements.onlineData.checked;
-        elements.photoGrid.textContent = "Recherche de photos…";
-        try {
-          const query = `"${name}"`;
-          const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrnamespace=6&gsrlimit=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=600&format=json&origin=*`;
-          const json = await fetchJson(url);
-          if(isObsolete()) return;
-          elements.photoGrid.replaceChildren();
-          const pages = Object.values(json?.query?.pages || {});
-          for(const page of pages){
-            const image = page.imageinfo?.[0];
-            const src = safeImageUrl(image?.thumburl || image?.url);
-            if(!src || /\.svg(?:$|\?)/i.test(src)) continue;
-            const card = document.createElement("div"); card.className = "photo";
-            const img = document.createElement("img"); img.src = src; img.alt = String(page.title || name).replace(/^File:/, ""); img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-            const cap = document.createElement("div"); cap.className = "cap";
-            const link = document.createElement("a"); link.href = `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`; link.target = "_blank"; link.rel = "noopener noreferrer"; link.textContent = img.alt;
-            const license = document.createElement("div"); license.textContent = `Auteur et licence : voir la fiche Wikimedia Commons (${stripMarkup(image.extmetadata?.LicenseShortName?.value || "licence sur la source")}).`;
-            cap.append(link, license); card.append(img,cap); elements.photoGrid.append(card);
+      function stripMarkup(value){return new DOMParser().parseFromString(String(value),"text/html").body.textContent||"";}
+      async function loadDepartmentPhotos(code,name,requestId){
+        state.photoController?.abort();const controller=new AbortController();state.photoController=controller;
+        const current=()=>!controller.signal.aborted&&requestId===state.selectedDeptRequestId&&code===state.selectedDeptCode;
+        elements.photoGrid.replaceChildren();elements.photoStatus.textContent=`Recherche de paysages et monuments : ${name}…`;
+        elements.btnReloadPhotos.disabled=true;
+        try{
+          const photos=await SouhaitsPhotos.loadDepartment({code,name,cities:window.SOUHAITS_TERRITORIES?.departments?.[code]?.communes||[]},{signal:controller.signal});
+          if(!current())return;
+          for(const photo of photos){
+            const card=document.createElement('figure');card.className='photo';const image=document.createElement('img');image.src=photo.src;image.alt=photo.title;image.loading='lazy';image.referrerPolicy='no-referrer';
+            image.addEventListener('error',()=>{card.remove();if(!elements.photoGrid.children.length)elements.photoStatus.textContent='Images momentanément indisponibles. Réessayez avec le bouton ci-dessous.';});
+            const caption=document.createElement('figcaption');caption.className='cap';const link=document.createElement('a');link.href=photo.source;link.textContent=photo.title;link.target='_blank';link.rel='noopener noreferrer';
+            const credit=document.createElement('div');credit.textContent=`${stripMarkup(photo.author)||'Auteur sur la source'} · ${stripMarkup(photo.license)}`;caption.append(link,credit);card.append(image,caption);elements.photoGrid.append(card);
           }
-          if(!elements.photoGrid.children.length) elements.photoGrid.textContent = "Aucune photo disponible. Les autres fonctions restent accessibles.";
-        } catch (_error) { if(!isObsolete()) elements.photoGrid.textContent = "Photos indisponibles. Les autres fonctions restent accessibles."; }
+          elements.photoStatus.textContent=photos.length?`${photos.length} illustrations Wikimedia Commons : cliquez sur une image ou sa légende pour la source et la licence.`:'Aucune photo disponible pour le moment. Les infos locales restent accessibles ; vous pouvez relancer la recherche.';
+        }catch(error){if(current())elements.photoStatus.textContent='Photos indisponibles sans connexion ou service temporairement indisponible. Les informations du département restent accessibles.';}
+        finally{if(current())elements.btnReloadPhotos.disabled=false;}
       }
-
-      function safeImageUrl(value){
-        try { const url = new URL(value); return url.protocol === "https:" && url.hostname === "upload.wikimedia.org" ? url.href : null; }
-        catch (_error) { return null; }
-      }
-      function stripMarkup(value){ return new DOMParser().parseFromString(String(value), "text/html").body.textContent || ""; }
 
       async function initMap(){
         if(typeof L === "undefined") throw new Error("Le composant cartographique local n’a pas été chargé.");
@@ -1619,7 +1611,10 @@
 
       function resetUI(){
         try { localStorage.removeItem(STORAGE_KEY); } catch (_error) {}
+        state.photoController?.abort();
         state.selectedDeptRequestId += 1;
+        elements.btnReloadPhotos.disabled=true;
+        elements.photoStatus.textContent='Choisissez un département pour découvrir ses photos.';
         elements.allResults.replaceChildren();
         elements.deptSearch.value = "";
         elements.infoSources.textContent = "Profil local indicatif. Sélectionne un département.";
@@ -1798,8 +1793,10 @@
         [elements.rang,elements.totalPostes,elements.pondChoix,elements.pondAttrac,elements.pondTension].forEach(input=>input.addEventListener('input',clearPredictions));
         [elements.listeType,elements.prioHandicap,elements.prioConjoint,elements.csEnfant,elements.csSoutien,elements.modeLonguenesse].forEach(input=>input.addEventListener('change',clearPredictions));
         elements.onlineBasemap.addEventListener('change',toggleBasemap);
+        elements.autoPhotos.addEventListener('change',()=>{state.photoController?.abort();if(state.selectedDeptCode){if(elements.autoPhotos.checked)loadDepartmentPhotos(state.selectedDeptCode,state.selectedDeptName,state.selectedDeptRequestId);else{elements.photoGrid.replaceChildren();elements.photoStatus.textContent='Photos automatiques désactivées.';elements.btnReloadPhotos.disabled=false;}}});
+        elements.btnReloadPhotos.addEventListener('click',()=>{if(state.selectedDeptCode)loadDepartmentPhotos(state.selectedDeptCode,state.selectedDeptName,state.selectedDeptRequestId);});
         elements.onlineData.addEventListener('change',()=>{
-          state.selectedDeptRequestId+=1;elements.photoGrid.replaceChildren();
+          state.selectedDeptRequestId+=1;state.photoController?.abort();
           if(state.selectedDeptCode)updateGlobalInfo(state.selectedDeptCode,state.selectedDeptName,getPredictionByCode(state.selectedDeptCode),state.selectedDeptRequestId,state.realDataCache[state.selectedDeptCode]);
         });
         window.addEventListener('souhaits:themechange',()=>{updateMapStyling();drawRadar(getPredictionByCode(state.selectedDeptCode));});

@@ -34,3 +34,5 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 
 [data-theme=dark] .sourceLink:hover,[data-theme=dark] .textButton:hover{background:#314c34;color:#e3efdc}
+
+.departmentPhotos{margin-top:28px;border-top:1px solid var(--line);padding-top:22px}.photoSectionHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.photoSectionHeader h3{font-family:Georgia,serif;font-size:24px;font-weight:400;margin:0}.departmentPhotos .photoGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.photo{margin:0;background:var(--panel)}.photo img{height:170px;transition:transform .35s}.photo:hover img{transform:scale(1.035)}.photo .cap{font-size:10px}.photo .cap>div{font-size:9px}.departmentPhotos>button{margin-top:14px}@media(max-width:650px){.departmentPhotos .photoGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.photo img{height:145px}}
